@@ -1,0 +1,4 @@
+[package]
+name = "tak-rs"
+version = "0.1.0"
+authors = ["Matt Wismer <mattwis86@gmail.com>"]
