@@ -16,7 +16,8 @@ I need a good way to transcribe moves as strings, so I am borrowing from the
 way chess games are transcribed. The vertical axis is labelled with numbers,
 and the horizontal axis with letters. A move is a location followed by a coded
 letter. For the movements, the letter is followed by a list of numbers
-describing how many pieces were left at each location.
+describing the amount each piece was moved, from the bottom of the stack to the
+top.
 
 F - flat stone laid
 S - standing stone laid
@@ -37,16 +38,16 @@ a1F e1F
 d2F c2F
 d3F d4F
 d5F c4F
-e2F c3R01
+e2F c3R1
 c3F b4F
 e4F e3F
 a4F b3F
-d5D01 b1F
-c3L01 b2F
-a4R01 c3F
-e4D01 c2F
-d2L01 c5F
-e3L011 d3L111
+d5D1 b1F
+c3L1 b2F
+a4R1 c3F
+e4D1 c2F
+d2L1 c5F
+e3L12 d3L012
 
 Breaking it down:
 
@@ -64,11 +65,10 @@ At this point the board looks like:
 
 d3F d4F
 d5F c4F
-e2F c3R01
+e2F c3R1
 
-So that move took a piece from c3, and moved it right 1 space, onto d3. (The 0
-marks that there were 0 pieces left on c3, and the 1 marks that 1 piece was
-added to d3.) Now (with right being the top of piles), the board looks like:
+So that move took a piece from c3, and moved it right 1 space, onto d3.  Now
+(with right being the top of piles), the board looks like:
 
 5|   |   |   |x  |
 4|   |   |o  |o  |
@@ -80,7 +80,7 @@ added to d3.) Now (with right being the top of piles), the board looks like:
 c3F b4F
 e4F e3F
 a4F b3F
-d5D01 b1F
+d5D1 b1F
 
 With a couple of questionable moves, P1 (x) has gotten himself into a pickle:
 
@@ -91,10 +91,10 @@ With a couple of questionable moves, P1 (x) has gotten himself into a pickle:
 1|o  |o  |   |   |x
   a   b   c   d   e
 
-c3L01 b2F
-a4R01 c3F
-e4D01 c2F
-d2L01 c5F
+c3L1 b2F
+a4R1 c3F
+e4D1 c2F
+d2L1 c5F
 
 P1 continuing to not even drop stones, but just try to move around to stay
 alive, now makes a really stupid move to lose:
@@ -106,11 +106,11 @@ alive, now makes a really stupid move to lose:
 1|o  |o  |   |   |x
   a   b   c   d   e
 
-e3L011
+e3L12
 
 Leaving the easy win for P2 with:
 
-d3L111
+d3L012
 
 5|   |o  |o  |   |
 4|   |ox |o  |ox |
