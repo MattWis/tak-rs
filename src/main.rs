@@ -20,6 +20,38 @@ struct Piece {
     owner: Player,
 }
 
+impl FromStr for Piece {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() < 4 {
+            return Err(());
+        }
+        let mut chars = s.chars();
+        let turn = chars.nth(2).unwrap();
+        if "FSC".contains(turn) {
+            let stone = match turn {
+                'F' => Stone::Flat,
+                'S' => Stone::Standing,
+                'C' => Stone::Capstone,
+                _ => return Err(()),
+            };
+            let player = match chars.next() {
+                Some('1') => Player::One,
+                Some('2') => Player::Two,
+                _ => return Err(()),
+            };
+
+            Ok(Piece {
+                stone: stone,
+                owner: player,
+            })
+        } else {
+            Err(())
+        }
+    }
+
+}
 #[derive(Clone, Debug)]
 struct Cell {
     pieces: Vec<Piece>,
@@ -46,6 +78,7 @@ impl Cell {
     }
 }
 
+#[derive(Debug)]
 enum Direction {
     Right,
     Left,
@@ -54,25 +87,24 @@ enum Direction {
 }
 
 impl Direction {
-    fn adjust(&self, x: usize, y: usize, offset: usize) -> (usize, usize) {
+    fn adjust(&self, point: &Point, offset: usize) -> Point {
         match self {
-            &Direction::Right => (x + offset, y),
-            &Direction::Left => (x - offset, y),
-            &Direction::Up => (x, y + offset),
-            &Direction::Down => (x, y - offset),
+            &Direction::Right => Point { x: point.x + offset, y: point.y },
+            &Direction::Left => Point { x: point.x - offset, y: point.y },
+            &Direction::Up => Point { x: point.x, y: point.y + offset },
+            &Direction::Down => Point { x: point.x, y: point.y - offset },
         }
     }
 }
 
+#[derive(Debug)]
 enum Turn {
     Placement {
-        x: usize,
-        y: usize,
+        point: Point,
         piece: Piece,
     },
     Slide {
-        x: usize,
-        y: usize,
+        point: Point,
         direction: Direction,
         offsets: Vec<usize>,
     },
@@ -83,6 +115,69 @@ impl FromStr for Turn {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() < 4 {
+            return Err(());
+        }
+        let point = match s.parse::<Point>() {
+            Ok(p) => p,
+            Err(_) => return Err(())
+        };
+        let mut chars = s.chars();
+        let turn = chars.nth(2).unwrap();
+        if let Ok(piece) = s.parse::<Piece>() {
+            Ok(Turn::Placement {
+                point: point,
+                piece: piece,
+            })
+        } else {
+            let direction = match turn {
+                'R' => Direction::Right,
+                'L' => Direction::Left,
+                'U' => Direction::Up,
+                'D' => Direction::Down,
+                _ => return Err(()),
+            };
+            let offsets = chars.map(|c| c.to_digit(10).unwrap() as usize)
+                               .collect();
+
+            Ok(Turn::Slide {
+                point: point,
+                direction: direction,
+                offsets: offsets,
+            })
+        }
+
+    }
+}
+
+fn play(turn: &Turn, board: &mut Board) -> () {
+    match turn {
+        &Turn::Placement { ref point, ref piece } => {
+            board.at(point).place_piece(*piece);
+        }
+        &Turn::Slide { ref point, ref direction, ref offsets } => {
+            assert!(offsets.len() == board.at(point).len(),
+                    "Trying to move a different number of pieces than exist.");
+
+            let cell = mem::replace(board.at(point), Cell::new());
+            let points = offsets.iter().map(|z| direction.adjust(point, *z));
+            for (point, piece) in points.zip(cell.pieces.iter()) {
+                board.at(&point).add_piece(*piece);
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Point {
+    x: usize,
+    y: usize,
+}
+
+impl FromStr for Point {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() < 2 {
             return Err(());
         }
         let mut chars = s.chars();
@@ -98,68 +193,9 @@ impl FromStr for Turn {
             Some(num) => num,
             None => return Err(()),
         };
-        let turn = chars.next().unwrap();
-        if "FSC".contains(turn) {
-            let stone = match turn {
-                'F' => Stone::Flat,
-                'S' => Stone::Standing,
-                'C' => Stone::Capstone,
-                _ => return Err(()),
-            };
-            let player = match chars.next() {
-                Some('1') => Player::One,
-                Some('2') => Player::Two,
-                _ => return Err(()),
-            };
-
-            Ok(Turn::Placement {
-                x: x,
-                y: y,
-                piece: Piece {
-                    owner: player,
-                    stone: stone,
-                },
-            })
-        } else if "RLUD".contains(turn) {
-            let direction = match turn {
-                'R' => Direction::Right,
-                'L' => Direction::Left,
-                'U' => Direction::Up,
-                'D' => Direction::Down,
-                _ => return Err(()),
-            };
-            let offsets: Vec<usize> = chars.map(|c| c.to_digit(10).unwrap() as usize).collect();
-
-            Ok(Turn::Slide {
-                x: x,
-                y: y,
-                direction: direction,
-                offsets: offsets,
-            })
-        } else {
-            Err(())
-        }
-
+        Ok(Point { x: x, y: y })
     }
-}
 
-fn play(turn: &Turn, board: &mut Board) -> () {
-    match turn {
-        &Turn::Placement { x, y, piece } => {
-            board.grid[x][y].place_piece(piece);
-        }
-        &Turn::Slide { x, y, ref direction, ref offsets } => {
-            assert!(offsets.len() == board.grid[x][y].len(),
-                    "Trying to move a different number of pieces than exist.");
-
-            let cell = mem::replace(&mut board.grid[x][y], Cell::new());
-            let points = offsets.iter().map(|z| direction.adjust(x, y, *z));
-            for (point, piece) in points.zip(cell.pieces.iter()) {
-                let (x, y) = point;
-                board.grid[x][y].add_piece(*piece);
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -170,6 +206,10 @@ struct Board {
 impl Board {
     fn new(board_size: usize) -> Board {
         Board { grid: vec![vec![Cell::new(); board_size]; board_size] }
+    }
+
+    fn at(&mut self, point: &Point) -> &mut Cell {
+        &mut self.grid[point.x][point.y]
     }
 }
 
