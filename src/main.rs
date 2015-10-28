@@ -34,6 +34,7 @@ impl Cell {
     }
 
     fn add_piece(&mut self, piece: Piece) -> () {
+        // TODO: Stacking checks
         self.pieces.push(piece);
     }
 
@@ -62,48 +63,35 @@ impl Direction {
     }
 }
 
-trait Turn {
-    fn play(&self, &mut Board) -> ();
+enum Turn {
+    Placement {
+        x: usize,
+        y: usize,
+        piece: Piece,
+    },
+    Slide {
+        x: usize,
+        y: usize,
+        direction: Direction,
+        offsets: Vec<usize>,
+    },
 }
 
-struct Placement {
-    x: usize,
-    y: usize,
-    piece: Piece,
-}
-
-impl Turn for Placement {
-    fn play(&self, board: &mut Board) -> () {
-        board.grid[self.x][self.y].place_piece(self.piece);
-    }
-}
-
-struct Slide {
-    x: usize,
-    y: usize,
-    direction: Direction,
-    offsets: Vec<usize>,
-}
-
-impl Slide {
-    fn locations(&self) -> Vec<(usize, usize)> {
-        let mut points = Vec::<(usize, usize)>::new();
-        for offset in self.offsets.iter() {
-            points.push(self.direction.adjust(self.x, self.y, *offset))
+fn play(turn: &Turn, board: &mut Board) -> () {
+    match turn {
+        &Turn::Placement { x, y, piece } => {
+            board.grid[x][y].place_piece(piece);
         }
-        points
-    }
-}
+        &Turn::Slide { x, y, ref direction, ref offsets } => {
+            assert!(offsets.len() == board.grid[x][y].len(),
+                    "Trying to move a different number of pieces than exist.");
 
-impl Turn for Slide {
-    fn play(&self, board: &mut Board) -> () {
-        assert!(self.offsets.len() == board.grid[self.x][self.y].len(),
-                "Trying to move a different number of pieces than exist.");
-
-        let cell = mem::replace(&mut board.grid[self.x][self.y], Cell::new());
-        for (point, piece) in self.locations().iter().zip(cell.pieces.iter()) {
-            let (x, y) = *point;
-            board.grid[x][y].add_piece(*piece);
+            let cell = mem::replace(&mut board.grid[x][y], Cell::new());
+            let points = offsets.iter().map(|z| direction.adjust(x, y, *z));
+            for (point, piece) in points.zip(cell.pieces.iter()) {
+                let (x, y) = point;
+                board.grid[x][y].add_piece(*piece);
+            }
         }
     }
 }
@@ -116,10 +104,6 @@ struct Board {
 impl Board {
     fn new(board_size: usize) -> Board {
         Board { grid: vec![vec![Cell::new(); board_size]; board_size] }
-    }
-
-    fn play<T: Turn>(&mut self, turn: T) -> () {
-        turn.play(self);
     }
 }
 
