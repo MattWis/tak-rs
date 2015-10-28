@@ -1,3 +1,5 @@
+use std::mem;
+
 #[derive(Clone, Copy, Debug)]
 enum Stone {
     Flat,
@@ -36,7 +38,8 @@ impl Cell {
     }
 
     fn place_piece(&mut self, piece: Piece) -> () {
-        assert!(self.pieces.len() == 0, "Cannot place stone on top of existing stone.");
+        assert!(self.pieces.len() == 0,
+                "Cannot place stone on top of existing stone.");
         self.pieces.push(piece);
     }
 }
@@ -59,21 +62,51 @@ impl Direction {
     }
 }
 
+trait Turn {
+    fn play(&self, &mut Board) -> ();
+}
+
+struct Placement {
+    x: usize,
+    y: usize,
+    piece: Piece,
+}
+
+impl Turn for Placement {
+    fn play(&self, board: &mut Board) -> () {
+        board.grid[self.x][self.y].place_piece(self.piece);
+    }
+}
+
 struct Slide {
+    x: usize,
+    y: usize,
     direction: Direction,
     offsets: Vec<usize>,
 }
 
 impl Slide {
-    fn locations(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
+    fn locations(&self) -> Vec<(usize, usize)> {
         let mut points = Vec::<(usize, usize)>::new();
         for offset in self.offsets.iter() {
-            points.push(self.direction.adjust(x, y, *offset))
+            points.push(self.direction.adjust(self.x, self.y, *offset))
         }
         points
     }
 }
 
+impl Turn for Slide {
+    fn play(&self, board: &mut Board) -> () {
+        assert!(self.offsets.len() == board.grid[self.x][self.y].len(),
+                "Trying to move a different number of pieces than exist.");
+
+        let cell = mem::replace(&mut board.grid[self.x][self.y], Cell::new());
+        for (point, piece) in self.locations().iter().zip(cell.pieces.iter()) {
+            let (x, y) = *point;
+            board.grid[x][y].add_piece(*piece);
+        }
+    }
+}
 
 #[derive(Debug)]
 struct Board {
@@ -85,31 +118,16 @@ impl Board {
         Board { grid: vec![vec![Cell::new(); board_size]; board_size] }
     }
 
-    fn place(&mut self, x: usize, y: usize, piece: Piece) -> () {
-        self.grid[x][y].place_piece(piece);
-    }
-
-    fn slide(&mut self, x: usize, y: usize, movement: Slide) -> () {
-        assert!(movement.offsets.len() == self.grid[x][y].len(),
-                "Trying to move a different number of pieces than exist.");
-
-        let cell = self.grid[x].remove(y);
-        self.grid[x].insert(y, Cell::new());
-
-        let points = movement.locations(x, y);
-        for (point, piece) in points.iter().zip(cell.pieces.iter()) {
-            let (new_x, new_y) = *point;
-            self.grid[new_x][new_y].add_piece(*piece);
-        }
-
+    fn play<T: Turn>(&mut self, turn: T) -> () {
+        turn.play(self);
     }
 }
 
 fn main() {
     let mut game = Board::new(4);
-    game.place(0, 0, Piece { stone: Stone::Standing, owner: Player::One });
-    game.place(0, 1, Piece { stone: Stone::Flat, owner: Player::Two });
-    game.slide(0, 0, Slide { direction: Direction::Up, offsets: vec![1]});
-    game.slide(0, 1, Slide { direction: Direction::Right, offsets: vec![1, 2]});
+    Placement { x: 0, y: 0, piece: Piece { stone: Stone::Standing, owner: Player::One }}.play(&mut game);
+    Placement { x: 0, y: 1, piece: Piece { stone: Stone::Standing, owner: Player::Two }}.play(&mut game);
+    Slide { x: 0, y: 0, direction: Direction::Up, offsets: vec![1]}.play(&mut game);
+    Slide { x: 0, y: 1, direction: Direction::Right, offsets: vec![1, 2]}.play(&mut game);
     println!("{:#?}", game);
 }
