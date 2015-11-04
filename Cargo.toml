@@ -1,5 +1,5 @@
 [package]
-name = "tak-rs"
+name = "tak"
 version = "0.1.0"
 authors = ["Matt Wismer <mattwis86@gmail.com>"]
 repository = "https://github.com/MattWis/tak-rs.git"
