@@ -239,6 +239,41 @@ impl Board {
     }
 }
 
+#[test]
+fn basic_placement() {
+    let mut game = Board::new(4);
+    play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
+    play(&("d3C2".parse::<Turn>().unwrap()), &mut game);
+}
+
+#[test]
+fn basic_movement() {
+    let mut game = Board::new(4);
+    play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
+    play(&("a1U1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2R12".parse::<Turn>().unwrap()), &mut game);
+}
+
+#[test]
+#[should_panic]
+fn invalid_movement() {
+    let mut game = Board::new(4);
+    play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2D1".parse::<Turn>().unwrap()), &mut game);
+}
+
+#[test]
+fn squash() {
+    let mut game = Board::new(4);
+    play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2C2".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2D1".parse::<Turn>().unwrap()), &mut game);
+}
+
+
 fn main() {
     let mut game = Board::new(4);
     play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
