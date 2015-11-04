@@ -3,7 +3,7 @@ use std::str::FromStr;
 use piece;
 use point;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Direction {
     Right,
     Left,
@@ -12,24 +12,32 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn adjust(&self, point: &point::Point, offset: usize) -> point::Point {
+    pub fn adjust(&self, point: &point::Point, offset: usize, size: usize) -> Option<point::Point> {
         match self {
-            &Direction::Right => point::Point {
-                x: point.x + offset,
-                y: point.y,
-            },
-            &Direction::Left => point::Point {
-                x: point.x - offset,
-                y: point.y,
-            },
-            &Direction::Up => point::Point {
-                x: point.x,
-                y: point.y + offset,
-            },
-            &Direction::Down => point::Point {
-                x: point.x,
-                y: point.y - offset,
-            },
+            &Direction::Right => if point.x + offset < size {
+                Some(point::Point {
+                    x: point.x + offset,
+                    y: point.y,
+                })
+            } else { None },
+            &Direction::Left => if point.x >= offset {
+                Some(point::Point {
+                    x: point.x - offset,
+                    y: point.y,
+                })
+            } else { None },
+            &Direction::Up => if point.y + offset < size {
+                Some(point::Point {
+                    x: point.x,
+                    y: point.y + offset,
+                })
+            } else { None },
+            &Direction::Down => if point.y >= offset {
+                Some(point::Point {
+                    x: point.x,
+                    y: point.y - offset,
+                })
+            } else { None },
         }
     }
 }

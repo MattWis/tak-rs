@@ -19,7 +19,7 @@ impl fmt::Display for Stone {
 }
 
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Player {
     One,
     Two,
