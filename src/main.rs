@@ -25,7 +25,7 @@ impl Piece {
     fn move_onto(&self, base: &mut Piece) -> () {
         assert!(base.stone != Stone::Standing || self.stone == Stone::Capstone,
                 "Cannot move normal stone onto standing stone");
-        if (base.stone == Stone::Standing && self.stone == Stone::Capstone) {
+        if base.stone == Stone::Standing && self.stone == Stone::Capstone {
             base.stone = Stone::Flat;
         }
     }
@@ -103,10 +103,22 @@ enum Direction {
 impl Direction {
     fn adjust(&self, point: &Point, offset: usize) -> Point {
         match self {
-            &Direction::Right => Point { x: point.x + offset, y: point.y },
-            &Direction::Left => Point { x: point.x - offset, y: point.y },
-            &Direction::Up => Point { x: point.x, y: point.y + offset },
-            &Direction::Down => Point { x: point.x, y: point.y - offset },
+            &Direction::Right => Point {
+                x: point.x + offset,
+                y: point.y,
+            },
+            &Direction::Left => Point {
+                x: point.x - offset,
+                y: point.y,
+            },
+            &Direction::Up => Point {
+                x: point.x,
+                y: point.y + offset,
+            },
+            &Direction::Down => Point {
+                x: point.x,
+                y: point.y - offset,
+            },
         }
     }
 }
@@ -133,7 +145,7 @@ impl FromStr for Turn {
         }
         let point = match s.parse::<Point>() {
             Ok(p) => p,
-            Err(_) => return Err(())
+            Err(_) => return Err(()),
         };
         let mut chars = s.chars();
         let turn = chars.nth(2).unwrap();
@@ -234,6 +246,4 @@ fn main() {
     play(&("a1U1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2R12".parse::<Turn>().unwrap()), &mut game);
     println!("{:#?}", game);
-    println!("{:#?}", "a1F1".parse::<Turn>());
-    println!("{:#?}", "a1D1".parse::<Turn>());
 }
