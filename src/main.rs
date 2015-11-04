@@ -1,3 +1,5 @@
+use std::iter;
+use std::fmt;
 use std::mem;
 use std::str::FromStr;
 
@@ -8,10 +10,30 @@ enum Stone {
     Capstone,
 }
 
+impl fmt::Display for Stone {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Stone::Flat => write!(f, "F"),
+            &Stone::Standing => write!(f, "S"),
+            &Stone::Capstone => write!(f, "C"),
+        }
+    }
+}
+
+
 #[derive(Clone, Copy, Debug)]
 enum Player {
     One,
     Two,
+}
+
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Player::One => write!(f, "1"),
+            &Player::Two => write!(f, "2"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -28,6 +50,12 @@ impl Piece {
         if base.stone == Stone::Standing && self.stone == Stone::Capstone {
             base.stone = Stone::Flat;
         }
+    }
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.stone, self.owner)
     }
 }
 
@@ -89,6 +117,16 @@ impl Cell {
         assert!(self.pieces.len() == 0,
                 "Cannot place stone on top of existing stone.");
         self.pieces.push(piece);
+    }
+
+    fn add_to_string(&self, string: &mut String, max_in_cell: usize) -> () {
+        string.push_str("|");
+        for piece in self.pieces.iter() {
+            string.push_str(&(piece.to_string()));
+        }
+        let padding = max_in_cell - self.pieces.len();
+        let space: String = iter::repeat("  ").take(padding).collect();
+        string.push_str(&space);
     }
 }
 
@@ -229,13 +267,37 @@ struct Board {
     grid: Vec<Vec<Cell>>,
 }
 
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut full = String::new();
+        let max = self.grid
+                      .iter()
+                      .map(|row| {
+                          row.iter()
+                             .map(|cell| cell.pieces.len())
+                             .max()
+                      })
+                      .max().unwrap().unwrap();
+        let width = (max * 2 + 1) * self.grid.len();
+        full.push_str(&(iter::repeat("_").take(width).collect::<String>()));
+        full.push_str("\n");
+        for line in self.grid.iter().rev() {
+            for cell in line.iter() {
+                cell.add_to_string(&mut full, max);
+            }
+            full.push_str("\n");
+        }
+        write!(f, "{}", full)
+    }
+}
+
 impl Board {
     fn new(board_size: usize) -> Board {
         Board { grid: vec![vec![Cell::new(); board_size]; board_size] }
     }
 
     fn at(&mut self, point: &Point) -> &mut Cell {
-        &mut self.grid[point.x][point.y]
+        &mut self.grid[point.y][point.x]
     }
 }
 
@@ -245,6 +307,12 @@ fn basic_placement() {
     play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
     play(&("d3C2".parse::<Turn>().unwrap()), &mut game);
+    println!("{}", game);
+    assert_eq!(game.to_string(), "____________\n\
+                                  |  |  |  |  \n\
+                                  |  |  |  |C2\n\
+                                  |F2|  |  |  \n\
+                                  |S1|  |  |  \n");
 }
 
 #[test]
@@ -254,6 +322,11 @@ fn basic_movement() {
     play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
     play(&("a1U1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2R12".parse::<Turn>().unwrap()), &mut game);
+    assert_eq!(game.to_string(), "____________\n\
+                                  |  |  |  |  \n\
+                                  |  |  |  |  \n\
+                                  |  |F2|S1|  \n\
+                                  |  |  |  |  \n");
 }
 
 #[test]
@@ -271,6 +344,11 @@ fn squash() {
     play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2C2".parse::<Turn>().unwrap()), &mut game);
     play(&("a2D1".parse::<Turn>().unwrap()), &mut game);
+    assert_eq!(game.to_string(), "____________________\n\
+                                  |    |    |    |    \n\
+                                  |    |    |    |    \n\
+                                  |    |    |    |    \n\
+                                  |F1C2|    |    |    \n");
 }
 
 
@@ -280,5 +358,5 @@ fn main() {
     play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
     play(&("a1U1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2R12".parse::<Turn>().unwrap()), &mut game);
-    println!("{:#?}", game);
+    println!("{}", game);
 }

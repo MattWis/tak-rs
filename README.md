@@ -58,12 +58,12 @@ d2F1 c2F2
 
 At this point the board looks like:
 
-5|   |   |   |   |
-4|   |   |   |   |
-3|   |   |o  |   |
-2|   |   |   |x  |
-1|o  |   |   |   |x
-  a   b   c   d   e
+5|  |  |  |  |
+4|  |  |  |  |
+3|  |  |F2|  |
+2|  |  |  |F1|
+1|F2|  |  |  |F1
+  a  b  c  d  e
 
 d3F1 d4F2
 d5F1 c4F2
@@ -72,11 +72,11 @@ e2F1 c3R1
 So that move took a piece from c3, and moved it right 1 space, onto d3.  Now
 (with right being the top of piles), the board looks like:
 
-5|   |   |   |x  |
-4|   |   |o  |o  |
-3|   |   |   |xo |
-2|   |   |   |x  |x
-1|o  |   |   |   |x
+5|    |    |    |F1  |
+4|    |    |F2  |F2  |
+3|    |    |    |F1F2|
+2|    |    |    |F1  |F1
+1|F2  |    |    |    |F1
   a   b   c   d   e
 
 c3F1 b4F2
@@ -84,13 +84,13 @@ e4F1 e3F2
 a4F1 b3F2
 d5D1 b1F2
 
-With a couple of questionable moves, P1 (x) has gotten himself into a pickle:
+With a couple of questionable moves, P1 has gotten himself into a pickle:
 
-5|   |   |   |   |
-4|x  |o  |o  |ox |x
-3|   |o  |x  |xo |o
-2|   |   |   |x  |x
-1|o  |o  |   |   |x
+5|    |    |    |F1  |
+4|F1  |F2  |F2  |F2F1|F1
+3|    |F2  |F1  |F1F2|F2
+2|    |    |    |F1  |F1
+1|F2  |    |    |    |F1
   a   b   c   d   e
 
 c3L1 b2F2
@@ -101,23 +101,31 @@ d2L1 c5F2
 P1 continuing to not even drop stones, but just try to move around to stay
 alive, now makes a really stupid move to lose:
 
-5|   |   |o  |   |
-4|   |ox |o  |ox |
-3|   |ox |o  |xo |ox
-2|   |o  |ox |   |x
-1|o  |o  |   |   |x
+5|    |    |F2  |    |
+4|F1  |F2F1|F2  |F2F1|
+3|    |F2F1|F2  |F1F2|F2F1
+2|    |F2  |F2F1|F1  |F1
+1|F2  |F2  |    |    |F1
   a   b   c   d   e
 
 e3L12
+
+5|      |      |F2    |      |
+4|F1    |F2F1  |F2    |F2F1  |
+3|      |F2F1  |F2F1  |F1F2F2|
+2|      |F2    |F2F1  |F1    |F1
+1|F2    |F2    |      |      |F1
+  a      b      c      d      e
 
 Leaving the easy win for P2 with:
 
 d3L012
 
-5|   |o  |o  |   |
-4|   |ox |o  |ox |
-3|   |oxo|oxo|x  |
-2|   |o  |ox |   |x
-1|o  |o  |   |   |x
-  a   b   c   d   e
+5|      |      |F2    |      |
+4|F1    |F2F1  |F2    |F2F1  |
+3|      |F2F1F2|F2F1F2|F1    |
+2|      |F2    |F2F1  |F1    |F1
+1|F2    |F2    |      |      |F1
+  a      b      c      d      e
 
+Note that the winning path goes b1, b2, b3, c3, c4, c5.
