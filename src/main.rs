@@ -1,7 +1,7 @@
 use std::mem;
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Stone {
     Flat,
     Standing,
@@ -18,6 +18,17 @@ enum Player {
 struct Piece {
     stone: Stone,
     owner: Player,
+}
+
+impl Piece {
+    // Flatten a standing stone if a capstone moves onto it
+    fn move_onto(&self, base: &mut Piece) -> () {
+        assert!(base.stone != Stone::Standing || self.stone == Stone::Capstone,
+                "Cannot move normal stone onto standing stone");
+        if (base.stone == Stone::Standing && self.stone == Stone::Capstone) {
+            base.stone = Stone::Flat;
+        }
+    }
 }
 
 impl FromStr for Piece {
@@ -67,7 +78,10 @@ impl Cell {
     }
 
     fn add_piece(&mut self, piece: Piece) -> () {
-        // TODO: Stacking checks
+        match self.pieces.last_mut() {
+            Some(base) => piece.move_onto(base),
+            None => {}
+        }
         self.pieces.push(piece);
     }
 
