@@ -42,7 +42,9 @@ pub struct Piece {
 
 impl Piece {
     // Flatten a standing stone if a capstone moves onto it
+    // Cannot move onto capstone or standing stone otherwise
     pub fn move_onto(&self, base: &mut Piece) -> () {
+        assert!(base.stone != Stone::Capstone, "Cannot move onto Capstone");
         assert!(base.stone != Stone::Standing || self.stone == Stone::Capstone,
                 "Cannot move normal stone onto standing stone");
         if base.stone == Stone::Standing && self.stone == Stone::Capstone {

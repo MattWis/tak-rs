@@ -58,9 +58,18 @@ fn basic_movement() {
 
 #[test]
 #[should_panic]
-fn invalid_movement() {
+fn invalid_movement_onto_standing() {
     let mut game = board::Board::new(4);
     play(&("a1S1".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
+    play(&("a2D1".parse::<Turn>().unwrap()), &mut game);
+}
+
+#[test]
+#[should_panic]
+fn invalid_movement_onto_capstone() {
+    let mut game = board::Board::new(4);
+    play(&("a1C1".parse::<Turn>().unwrap()), &mut game);
     play(&("a2F2".parse::<Turn>().unwrap()), &mut game);
     play(&("a2D1".parse::<Turn>().unwrap()), &mut game);
 }
