@@ -47,7 +47,7 @@ impl Square {
         string.push_str(&space);
     }
 
-    fn top_player(&self)-> Option<Player> {
+    fn top_player(&self) -> Option<Player> {
         match self.pieces.last() {
             Some(piece) => if piece.stone == piece::Stone::Standing {
                 None
@@ -135,14 +135,12 @@ impl Board {
             let start = path.walk(self.size());
             println!("{:?}", start);
             for dir in dirs.iter() {
-                if let Some(point) = dir.adjust(&start, 1, self.size()) {
-                    if !visited.contains(&point) {
-                        if self.is_top(player, &point) {
-                            let mut new_path = path.clone();
-                            new_path.steps.push(*dir);
-                            paths.push_back(new_path);
-                            visited.insert(point);
-                        }
+                if let Some(p) = dir.adjust(&start, 1, self.size()) {
+                    if !visited.contains(&p) && self.is_top(player, &p) {
+                        let mut new_path = path.clone();
+                        new_path.steps.push(*dir);
+                        paths.push_back(new_path);
+                        visited.insert(p);
                     }
                 }
             }
