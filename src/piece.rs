@@ -67,9 +67,9 @@ impl FromStr for Piece {
             return Err(());
         }
         let mut chars = s.chars();
-        let turn = chars.nth(2).unwrap();
-        if "FSC".contains(turn) {
-            let stone = match turn {
+        let stone_type = chars.nth(2).unwrap_or('0');
+        if "FSC".contains(stone_type) {
+            let stone = match stone_type {
                 'F' => Stone::Flat,
                 'S' => Stone::Standing,
                 'C' => Stone::Capstone,

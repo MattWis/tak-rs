@@ -17,8 +17,8 @@ impl FromStr for Point {
         let mut chars = s.chars();
         let letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
         let numbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
-        let grid_x = chars.next().unwrap();
-        let grid_y = chars.next().unwrap();
+        let grid_x = chars.next().unwrap_or('0');
+        let grid_y = chars.next().unwrap_or('0');
         let x = match letters.iter().position(|c| *c == grid_x) {
             Some(num) => num,
             None => return Err(()),

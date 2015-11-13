@@ -62,12 +62,12 @@ impl FromStr for Turn {
         if s.len() < 4 {
             return Err(());
         }
-        let point = match s.parse::<point::Point>() {
-            Ok(p) => p,
-            Err(_) => return Err(()),
-        };
+        let point = try!(s.parse::<point::Point>());
         let mut chars = s.chars();
-        let turn = chars.nth(2).unwrap();
+        let turn = match chars.nth(2) {
+            Some(c) => c,
+            None => return Err(())
+        };
         if let Ok(piece) = s.parse::<piece::Piece>() {
             Ok(Turn::Placement {
                 point: point,
