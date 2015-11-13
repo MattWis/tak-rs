@@ -23,18 +23,21 @@ impl Square {
         self.pieces.len()
     }
 
-    pub fn add_piece(&mut self, piece: Piece) -> () {
+    pub fn add_piece(&mut self, piece: Piece) -> Result<(), String> {
         match self.pieces.last_mut() {
-            Some(base) => piece.move_onto(base),
+            Some(base) => try!(piece.move_onto(base)),
             None => {}
         }
         self.pieces.push(piece);
+        Ok(())
     }
 
-    pub fn place_piece(&mut self, piece: Piece) -> () {
-        assert!(self.len() == 0,
-                "Cannot place stone on top of existing stone.");
+    pub fn place_piece(&mut self, piece: Piece) -> Result<(), String> {
+        if self.len() != 0 {
+            return Err("Cannot place stone on top of existing stone.".into())
+        }
         self.pieces.push(piece);
+        Ok(())
     }
 
     fn add_to_string(&self, string: &mut String, max_in_cell: usize) -> () {
@@ -70,10 +73,10 @@ impl Path {
         Path { start: start, steps: vec![] }
     }
 
-    fn walk(&self, size: usize) -> Point {
-        let mut point = self.start;
+    fn walk(&self, size: usize) -> Option<Point> {
+        let mut point = Some(self.start);
         for dir in self.steps.iter() {
-            point = dir.adjust(&point, 1, size).unwrap();
+            point = dir.adjust(&point, 1, size);
         }
         point
     }
@@ -87,9 +90,13 @@ pub struct Board {
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut full = String::new();
-        let max = self.grid.iter()
-                           .map(|row| row.iter().map(|cell| cell.len()).max())
-                           .max().unwrap().unwrap();
+        let max = match self.grid.iter()
+                                 .map(|r| r.iter().map(|c| c.len()).max())
+                                 .max() {
+            Some(Some(x)) => x,
+            _ => return Err(fmt::Error)
+        };
+
         let width = (max * 2 + 1) * self.grid.len();
         full.push_str(&(iter::repeat("_").take(width).collect::<String>()));
         full.push_str("\n");
@@ -127,11 +134,13 @@ impl Board {
              player: Player) -> BTreeSet<Point> {
         let mut visited = BTreeSet::new();
         for path in paths.iter() {
-            visited.insert(path.walk(self.size()));
+            match path.walk(self.size()) {
+                Some(p) => visited.insert(p),
+                None => true,
+            };
         }
 
-        while !paths.is_empty() {
-            let path: Path = paths.pop_front().unwrap();
+        while let Some(path) = paths.pop_front() {
             let start = path.walk(self.size());
             println!("{:?}", start);
             for dir in dirs.iter() {

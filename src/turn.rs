@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use piece;
 use point;
+use point::Point;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Direction {
@@ -12,7 +13,11 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn adjust(&self, point: &point::Point, offset: usize, size: usize) -> Option<point::Point> {
+    pub fn adjust(&self, pt: &Option<Point>, offset: usize, size: usize) -> Option<Point> {
+        let point = match *pt {
+            Some(p) => p,
+            None => return None,
+        };
         match self {
             &Direction::Right => if point.x + offset < size {
                 Some(point::Point {
@@ -81,8 +86,16 @@ impl FromStr for Turn {
                 'D' => Direction::Down,
                 _ => return Err(()),
             };
-            let offsets = chars.map(|c| c.to_digit(10).unwrap() as usize)
-                               .collect();
+            let offsets = chars.map(|c| {
+                match c.to_digit(10) {
+                    Some(x) => x as usize,
+                    None => 100,
+                }
+            }).collect::<Vec<_>>();
+
+            if offsets.iter().any(|x| *x > 99) {
+                return Err(())
+            }
 
             Ok(Turn::Slide {
                 point: point,
