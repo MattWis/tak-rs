@@ -130,15 +130,12 @@ impl Board {
         }
     }
 
-    fn follow(&self, paths: &mut VecDeque<Path>, dirs: &Vec<Direction>,
-             player: Player) -> BTreeSet<Point> {
-        let mut visited = BTreeSet::new();
-        for path in paths.iter() {
-            match path.walk(self.size()) {
-                Some(p) => visited.insert(p),
-                None => true,
-            };
-        }
+    fn follow(&self, starts: &Vec<Point>, dirs: &Vec<Direction>, player: Player)
+              -> BTreeSet<Point> {
+        let mut visited = starts.iter().filter(|p| self.is_top(player, &p))
+                                       .map(|p| *p).collect::<BTreeSet<_>>();
+        let mut paths = visited.iter().map(|p| Path::new(*p))
+                                      .collect::<VecDeque<_>>();
 
         while let Some(path) = paths.pop_front() {
             let start = path.walk(self.size());
@@ -168,31 +165,27 @@ impl Board {
     /// answer when a move causes both players to "win". Is there a rule about
     /// that?
     pub fn check_winner(&self) -> Option<piece::Player> {
-        let horiz_dirs = vec![Direction::Right, Direction::Down, Direction::Up];
-        let mut paths = VecDeque::new();
-        for y in 0..self.grid.len() {
-            paths.push_back(Path::new(Point { x: 0, y: y }));
-        }
-        let visited = self.follow(&mut paths.clone(), &horiz_dirs, Player::One);
-        if visited.iter().any(|p| p.x == self.size() - 1) {
+        let dirs = vec![Direction::Right, Direction::Down, Direction::Up];
+        let points = (0..self.size()).map(|y| Point { x: 0, y: y })
+                                     .collect::<Vec<_>>();
+        if self.follow(&points, &dirs, Player::One).iter()
+               .any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::One)
         }
-        let visited = self.follow(&mut paths, &horiz_dirs, Player::Two);
-        if visited.iter().any(|p| p.x == self.size() - 1) {
+        if self.follow(&points, &dirs, Player::Two).iter()
+               .any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::Two)
         }
 
-        let vert_dirs = vec![Direction::Up, Direction::Right, Direction::Left];
-        paths = VecDeque::new();
-        for x in 0..self.grid.len() {
-            paths.push_back(Path::new(Point { x: x, y: 0 }));
-        }
-        let visited = self.follow(&mut paths.clone(), &vert_dirs, Player::One);
-        if visited.iter().any(|p| p.y == self.size() - 1) {
+        let dirs = vec![Direction::Up, Direction::Right, Direction::Left];
+        let points = (0..self.size()).map(|x| Point { x: x, y: 0 })
+                                     .collect::<Vec<_>>();
+        if self.follow(&points, &dirs, Player::One).iter()
+               .any(|p| p.y == self.size() - 1) {
             return Some(Player::One)
         }
-        let visited = self.follow(&mut paths, &vert_dirs, Player::Two);
-        if visited.iter().any(|p| p.y == self.size() - 1) {
+        if self.follow(&points, &dirs, Player::Two).iter()
+               .any(|p| p.y == self.size() - 1) {
             return Some(Player::Two)
         }
         None

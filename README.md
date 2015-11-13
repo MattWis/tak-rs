@@ -37,7 +37,7 @@ As an example, here's a game I played (poorly) against myself on a 5x5 board.
 Capstone effectively.)
 
 a1F2 e1F1
-d2F1 c2F2
+d2F1 c3F2
 d3F1 d4F2
 d5F1 c4F2
 e2F1 c3R1
@@ -54,7 +54,7 @@ e3L12 d3L012
 Breaking it down:
 
 a1F2 e1F1
-d2F1 c2F2
+d2F1 c3F2
 
 At this point the board looks like:
 
