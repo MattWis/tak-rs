@@ -157,38 +157,42 @@ impl Board {
         visited
     }
 
+    /// Checks for the winner
+    ///
+    /// Uses follow to go from the right wall as far left as possible for each
+    /// player, and then uses follow to go from the bottom wall as far up as
+    /// possible. If the string of connected pieces reaches the far wall, it's
+    /// a win.
+    ///
+    /// Returns when the first winner is found. It will give a weird (wrong?)
+    /// answer when a move causes both players to "win". Is there a rule about
+    /// that?
     pub fn check_winner(&self) -> Option<piece::Player> {
         let horiz_dirs = vec![Direction::Right, Direction::Down, Direction::Up];
         let mut paths = VecDeque::new();
         for y in 0..self.grid.len() {
-            let point = Point { x: 0, y: y };
-            paths.push_back(Path::new(point));
+            paths.push_back(Path::new(Point { x: 0, y: y }));
         }
         let visited = self.follow(&mut paths.clone(), &horiz_dirs, Player::One);
-        if visited.iter().filter(|p| p.x == self.size() - 1)
-                         .collect::<Vec<_>>().len() > 0 {
+        if visited.iter().any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::One)
         }
-        let visited = self.follow(&mut paths.clone(), &horiz_dirs, Player::Two);
-        if visited.iter().filter(|p| p.x == self.size() - 1)
-                         .collect::<Vec<_>>().len() > 0 {
+        let visited = self.follow(&mut paths, &horiz_dirs, Player::Two);
+        if visited.iter().any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::Two)
         }
 
         let vert_dirs = vec![Direction::Up, Direction::Right, Direction::Left];
         paths = VecDeque::new();
         for x in 0..self.grid.len() {
-            let point = Point { x: x, y: 0 };
-            paths.push_back(Path::new(point));
+            paths.push_back(Path::new(Point { x: x, y: 0 }));
         }
         let visited = self.follow(&mut paths.clone(), &vert_dirs, Player::One);
-        if visited.iter().filter(|p| p.y == self.size() - 1)
-                         .collect::<Vec<_>>().len() > 0 {
+        if visited.iter().any(|p| p.y == self.size() - 1) {
             return Some(Player::One)
         }
-        let visited = self.follow(&mut paths.clone(), &vert_dirs, Player::Two);
-        if visited.iter().filter(|p| p.y == self.size() - 1)
-                         .collect::<Vec<_>>().len() > 0 {
+        let visited = self.follow(&mut paths, &vert_dirs, Player::Two);
+        if visited.iter().any(|p| p.y == self.size() - 1) {
             return Some(Player::Two)
         }
         None
