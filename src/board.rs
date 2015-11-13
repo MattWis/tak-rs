@@ -139,7 +139,6 @@ impl Board {
 
         while let Some(path) = paths.pop_front() {
             let start = path.walk(self.size());
-            println!("{:?}", start);
             for dir in dirs.iter() {
                 if let Some(p) = dir.adjust(&start, 1, self.size()) {
                     if !visited.contains(&p) && self.is_top(player, &p) {
