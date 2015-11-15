@@ -9,7 +9,7 @@ pub use turn::Turn;
 pub use board::Board;
 pub use piece::Player;
 
-pub fn play(turn: &Turn, board: &mut board::Board) -> Result<(), String> {
+pub fn play(turn: &Turn, board: &mut Board) -> Result<(), String> {
     match turn {
         &Turn::Placement { ref point, ref piece } => {
             try!(board.at(point).place_piece(*piece));
