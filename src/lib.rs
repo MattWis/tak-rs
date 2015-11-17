@@ -12,13 +12,18 @@ pub use piece::Player;
 pub fn play(turn: &Turn, board: &mut Board) -> Result<(), String> {
     match turn {
         &Turn::Placement { ref point, ref piece } => {
-            try!(board.at(point).place_piece(*piece));
+            let square = try!(board.at_mut(point));
+            try!(square.place_piece(*piece));
         }
         &Turn::Slide { ref point, ref direction, ref offsets } => {
-            assert!(offsets.len() == board.at(point).len(),
-                    "Trying to move a different number of pieces than exist.");
+            let cell = {
+                let square = try!(board.at_mut(point));
+                if offsets.len() != square.len() {
+                    return Err("Trying to move a different number of pieces than exist".into());
+                }
 
-            let cell = mem::replace(board.at(point), board::Square::new());
+                mem::replace(square, board::Square::new())
+            };
             let points = offsets.iter()
                                 .map(|z| direction.adjust(&Some(*point), *z, board.size()))
                                 .collect::<Vec<_>>();
@@ -28,7 +33,8 @@ pub fn play(turn: &Turn, board: &mut Board) -> Result<(), String> {
                     Some(x) => x,
                     None => return Err("".into()),
                 };
-                try!(board.at(&p).add_piece(*piece));
+                let square = try!(board.at_mut(&p));
+                try!(square.add_piece(*piece));
             }
         }
     }

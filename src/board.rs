@@ -119,8 +119,24 @@ impl Board {
         Board { grid: vec![vec![Square::new(); board_size]; board_size] }
     }
 
-    pub fn at(&mut self, point: &Point) -> &mut Square {
-        &mut self.grid[point.y][point.x]
+    pub fn at(&self, point: &Point) -> Result<&Square, String> {
+        match self.grid.get(point.y) {
+            Some(row) => match row.get(point.x) {
+                Some(square) => Ok(square),
+                None => Err("Invalid point".into()),
+            },
+            None => Err("Invalid point".into()),
+        }
+    }
+
+    pub fn at_mut(&mut self, point: &Point) -> Result<&mut Square, String> {
+        match self.grid.get_mut(point.y) {
+            Some(row) => match row.get_mut(point.x) {
+                Some(square) => Ok(square),
+                None => Err("Invalid point".into()),
+            },
+            None => Err("Invalid point".into()),
+        }
     }
 
     pub fn size(&self) -> usize {
@@ -128,9 +144,12 @@ impl Board {
     }
 
     pub fn is_top(&self, player: piece::Player, point: &Point) -> bool {
-        match self.grid[point.y][point.x].top_player() {
-            Some(x) => x == player,
-            None => false,
+        match self.at(point) {
+            Ok(p) => match p.top_player() {
+                Some(x) => x == player,
+                None => false,
+            },
+            Err(_) => false,
         }
     }
 

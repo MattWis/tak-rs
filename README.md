@@ -16,7 +16,6 @@ online. (Or some combination of the three.)
 2. Only can move piles you control
 3. Limit number of stones played (end game condition)
 4. Number of stones left (winning the flats / draw)
-5. Use get instead of []
 
 ## Writing games of tak
 
