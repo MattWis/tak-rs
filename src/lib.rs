@@ -19,9 +19,9 @@ pub fn play(turn: &Turn, board: &mut Board) -> Result<(), String> {
                     "Trying to move a different number of pieces than exist.");
 
             let cell = mem::replace(board.at(point), board::Square::new());
-            let points = offsets.iter().map(|z| {
-                direction.adjust(&Some(*point), *z, board.size())
-            }).collect::<Vec<_>>();
+            let points = offsets.iter()
+                                .map(|z| direction.adjust(&Some(*point), *z, board.size()))
+                                .collect::<Vec<_>>();
 
             for (point, piece) in points.iter().zip(cell.pieces.iter()) {
                 let p = match *point {

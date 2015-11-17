@@ -24,25 +24,33 @@ impl Direction {
                     x: point.x + offset,
                     y: point.y,
                 })
-            } else { None },
+            } else {
+                None
+            },
             &Direction::Left => if point.x >= offset {
                 Some(point::Point {
                     x: point.x - offset,
                     y: point.y,
                 })
-            } else { None },
+            } else {
+                None
+            },
             &Direction::Up => if point.y + offset < size {
                 Some(point::Point {
                     x: point.x,
                     y: point.y + offset,
                 })
-            } else { None },
+            } else {
+                None
+            },
             &Direction::Down => if point.y >= offset {
                 Some(point::Point {
                     x: point.x,
                     y: point.y - offset,
                 })
-            } else { None },
+            } else {
+                None
+            },
         }
     }
 }
@@ -71,7 +79,7 @@ impl FromStr for Turn {
         let mut chars = s.chars();
         let turn = match chars.nth(2) {
             Some(c) => c,
-            None => return Err(())
+            None => return Err(()),
         };
         if let Ok(piece) = s.parse::<piece::Piece>() {
             Ok(Turn::Placement {
@@ -87,14 +95,15 @@ impl FromStr for Turn {
                 _ => return Err(()),
             };
             let offsets = chars.map(|c| {
-                match c.to_digit(10) {
-                    Some(x) => x as usize,
-                    None => 100,
-                }
-            }).collect::<Vec<_>>();
+                                   match c.to_digit(10) {
+                                       Some(x) => x as usize,
+                                       None => 100,
+                                   }
+                               })
+                               .collect::<Vec<_>>();
 
             if offsets.iter().any(|x| *x > 99) {
-                return Err(())
+                return Err(());
             }
 
             Ok(Turn::Slide {

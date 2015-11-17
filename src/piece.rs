@@ -45,7 +45,7 @@ impl Piece {
     // Cannot move onto capstone or standing stone otherwise
     pub fn move_onto(&self, base: &mut Piece) -> Result<(), String> {
         if base.stone == Stone::Capstone {
-            return Err("Cannot move onto Capstone".into())
+            return Err("Cannot move onto Capstone".into());
         }
         if base.stone == Stone::Standing && self.stone != Stone::Capstone {
             return Err("Cannot move normal stone onto standing stone".into());

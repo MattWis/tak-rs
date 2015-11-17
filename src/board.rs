@@ -34,7 +34,7 @@ impl Square {
 
     pub fn place_piece(&mut self, piece: Piece) -> Result<(), String> {
         if self.len() != 0 {
-            return Err("Cannot place stone on top of existing stone.".into())
+            return Err("Cannot place stone on top of existing stone.".into());
         }
         self.pieces.push(piece);
         Ok(())
@@ -70,7 +70,10 @@ pub struct Path {
 
 impl Path {
     fn new(start: Point) -> Path {
-        Path { start: start, steps: vec![] }
+        Path {
+            start: start,
+            steps: vec![],
+        }
     }
 
     fn walk(&self, size: usize) -> Option<Point> {
@@ -90,11 +93,12 @@ pub struct Board {
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut full = String::new();
-        let max = match self.grid.iter()
-                                 .map(|r| r.iter().map(|c| c.len()).max())
-                                 .max() {
+        let max = match self.grid
+                            .iter()
+                            .map(|r| r.iter().map(|c| c.len()).max())
+                            .max() {
             Some(Some(x)) => x,
-            _ => return Err(fmt::Error)
+            _ => return Err(fmt::Error),
         };
 
         let width = (max * 2 + 1) * self.grid.len();
@@ -130,12 +134,18 @@ impl Board {
         }
     }
 
-    fn follow(&self, starts: &Vec<Point>, dirs: &Vec<Direction>, player: Player)
+    fn follow(&self,
+              starts: &Vec<Point>,
+              dirs: &Vec<Direction>,
+              player: Player)
               -> BTreeSet<Point> {
-        let mut visited = starts.iter().filter(|p| self.is_top(player, &p))
-                                       .map(|p| *p).collect::<BTreeSet<_>>();
-        let mut paths = visited.iter().map(|p| Path::new(*p))
-                                      .collect::<VecDeque<_>>();
+        let mut visited = starts.iter()
+                                .filter(|p| self.is_top(player, &p))
+                                .map(|p| *p)
+                                .collect::<BTreeSet<_>>();
+        let mut paths = visited.iter()
+                               .map(|p| Path::new(*p))
+                               .collect::<VecDeque<_>>();
 
         while let Some(path) = paths.pop_front() {
             let start = path.walk(self.size());
@@ -165,27 +175,33 @@ impl Board {
     /// that?
     pub fn check_winner(&self) -> Option<piece::Player> {
         let dirs = vec![Direction::Right, Direction::Down, Direction::Up];
-        let points = (0..self.size()).map(|y| Point { x: 0, y: y })
-                                     .collect::<Vec<_>>();
-        if self.follow(&points, &dirs, Player::One).iter()
+        let points = (0..self.size())
+                         .map(|y| Point { x: 0, y: y })
+                         .collect::<Vec<_>>();
+        if self.follow(&points, &dirs, Player::One)
+               .iter()
                .any(|p| p.x == self.size() - 1) {
-            return Some(piece::Player::One)
+            return Some(piece::Player::One);
         }
-        if self.follow(&points, &dirs, Player::Two).iter()
+        if self.follow(&points, &dirs, Player::Two)
+               .iter()
                .any(|p| p.x == self.size() - 1) {
-            return Some(piece::Player::Two)
+            return Some(piece::Player::Two);
         }
 
         let dirs = vec![Direction::Up, Direction::Right, Direction::Left];
-        let points = (0..self.size()).map(|x| Point { x: x, y: 0 })
-                                     .collect::<Vec<_>>();
-        if self.follow(&points, &dirs, Player::One).iter()
+        let points = (0..self.size())
+                         .map(|x| Point { x: x, y: 0 })
+                         .collect::<Vec<_>>();
+        if self.follow(&points, &dirs, Player::One)
+               .iter()
                .any(|p| p.y == self.size() - 1) {
-            return Some(Player::One)
+            return Some(Player::One);
         }
-        if self.follow(&points, &dirs, Player::Two).iter()
+        if self.follow(&points, &dirs, Player::Two)
+               .iter()
                .any(|p| p.y == self.size() - 1) {
-            return Some(Player::Two)
+            return Some(Player::Two);
         }
         None
     }
