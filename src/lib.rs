@@ -29,7 +29,13 @@ impl fmt::Display for Game {
         try!(write!(f, "P1: {}/{} Flatstones\n", p1_flat, flats));
         try!(write!(f, "P1: {}/{} Capstones\n", p1_cap, caps));
         try!(write!(f, "P2: {}/{} Flatstones\n", p2_flat, flats));
-        write!(f, "P2: {}/{} Capstones\n", p2_cap, caps)
+        try!(write!(f, "P2: {}/{} Capstones\n", p2_cap, caps));
+
+        match self.check_winner() {
+            Some(Player::One) => write!(f, "\nPlayer 1 Wins!"),
+            Some(Player::Two) => write!(f, "\nPlayer 2 Wins!"),
+            None => write!(f, ""),
+        }
     }
 }
 
