@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::fmt;
 use std::mem;
 
 pub mod piece;
@@ -19,6 +20,19 @@ pub struct Game {
     history: Vec<Turn>,
 }
 
+impl fmt::Display for Game {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "{}\n", self.board));
+
+        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.board.piece_counts();
+        let (flats, caps) = self.board.piece_limits();
+        try!(write!(f, "P1: {}/{} Flatstones\n", p1_flat, flats));
+        try!(write!(f, "P1: {}/{} Capstones\n", p1_cap, caps));
+        try!(write!(f, "P2: {}/{} Flatstones\n", p2_flat, flats));
+        write!(f, "P2: {}/{} Capstones\n", p2_cap, caps)
+    }
+}
+
 impl Game {
     pub fn new(size: usize) -> Game {
         Game {
@@ -29,7 +43,7 @@ impl Game {
     }
 
 
-    pub fn check_winner(&self) -> Option<Player> {
+    fn check_winner(&self) -> Option<Player> {
         self.check_road_winner().or(self.check_flat_winner())
     }
     pub fn size(&self) -> usize {
@@ -40,14 +54,14 @@ impl Game {
         self.board.to_string()
     }
 
-    pub fn play(&mut self, turn: &str) -> Result<(), String> {
+    pub fn play(&mut self, turn: &str) -> Result<Option<Player>, String> {
         match turn.parse::<Turn>() {
             Ok(t) => self.play_parsed(t),
             Err(_) => Err("Invalid move".into()),
         }
     }
 
-    pub fn play_parsed(&mut self, turn: Turn) -> Result<(), String> {
+    pub fn play_parsed(&mut self, turn: Turn) -> Result<Option<Player>, String> {
         match turn {
             Turn::Place { ref point, ref piece } => {
                 try!(self.place(point, piece));
@@ -58,7 +72,7 @@ impl Game {
         }
         self.history.push(turn);
         self.next = self.next.other();
-        Ok(())
+        Ok(self.check_winner())
     }
 
     fn place(&mut self, point: &Point, piece: &Piece) -> Result<(), String> {
