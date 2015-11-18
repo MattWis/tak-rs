@@ -85,6 +85,9 @@ impl Game {
             if offsets.len() != square.len() {
                 return Err("Trying to move a different number of pieces than exist".into());
             }
+            if square.mover() != Some(self.next) {
+                return Err("Must have control to move pile".into())
+            }
 
             mem::replace(square, board::Square::new())
         };
@@ -157,7 +160,7 @@ impl Game {
             let mut p2_top = 0;
 
             for square in self.board.squares().iter() {
-                match square.top_player() {
+                match square.scorer() {
                     Some(Player::One) => p1_top += 1,
                     Some(Player::Two) => p2_top += 1,
                     None => (),

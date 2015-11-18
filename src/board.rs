@@ -50,12 +50,28 @@ impl Square {
         string.push_str(&space);
     }
 
-    pub fn top_player(&self) -> Option<Player> {
+    // Used for moving stones eligibility
+    pub fn mover(&self) -> Option<Player> {
+        self.pieces.last().map(|piece| piece.owner)
+    }
+
+    // Used for road wins
+    pub fn owner(&self) -> Option<Player> {
         self.pieces.last().and_then(|piece|
             if piece.stone == piece::Stone::Standing {
                 None
             } else {
                 Some(piece.owner)
+            })
+    }
+
+    // Used for winning the flats
+    pub fn scorer(&self) -> Option<Player> {
+        self.pieces.last().and_then(|piece|
+            if piece.stone == piece::Stone::Flat {
+                Some(piece.owner)
+            } else {
+                None
             })
     }
 }
@@ -113,13 +129,6 @@ impl Board {
         self.grid.iter().flat_map(|row| row.iter()).collect()
     }
 
-    pub fn is_top(&self, player: piece::Player, point: &Point) -> bool {
-        self.at(point).ok()
-            .and_then(|square| square.top_player())
-            .map(|x| x == player)
-            .unwrap_or(false)
-    }
-
     /// Checks to see if all spaces have at least one piece
     pub fn full(&self) -> bool {
         !self.squares().iter().any(|sq| sq.pieces.is_empty())
@@ -164,7 +173,7 @@ impl Board {
 
         while let Some(start) = starts.pop_front() {
             visited.insert(start);
-            if self.is_top(player, &start) {
+            if self.at(&start).ok().and_then(|p| p.owner()) == Some(player) {
                 connected.insert(start);
                 for point in Direction::neighbors(&start, self.size()) {
                     if !visited.contains(&point) {
