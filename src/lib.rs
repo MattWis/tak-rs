@@ -25,7 +25,7 @@ pub fn play(turn: &Turn, board: &mut Board) -> Result<(), String> {
                 mem::replace(square, board::Square::new())
             };
             let points = offsets.iter()
-                                .map(|z| direction.adjust(&Some(*point), *z, board.size()))
+                                .map(|z| direction.adjust(point, *z, board.size()))
                                 .collect::<Vec<_>>();
 
             for (point, piece) in points.iter().zip(cell.pieces.iter()) {

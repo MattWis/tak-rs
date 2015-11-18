@@ -14,8 +14,6 @@ online. (Or some combination of the three.)
 
 1. Concept of who's turn it is
 2. Only can move piles you control
-3. Limit number of stones played (end game condition)
-4. Number of stones left (winning the flats / draw)
 
 ## Writing games of tak
 

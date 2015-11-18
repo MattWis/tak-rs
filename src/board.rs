@@ -60,29 +60,6 @@ impl Square {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Path {
-    start: Point,
-    steps: Vec<Direction>,
-}
-
-impl Path {
-    fn new(start: Point) -> Path {
-        Path {
-            start: start,
-            steps: vec![],
-        }
-    }
-
-    fn walk(&self, size: usize) -> Option<Point> {
-        let mut point = Some(self.start);
-        for dir in self.steps.iter() {
-            point = dir.adjust(&point, 1, size);
-        }
-        point
-    }
-}
-
 #[derive(Debug)]
 pub struct Board {
     grid: Vec<Vec<Square>>,
@@ -132,40 +109,44 @@ impl Board {
         self.grid.len()
     }
 
+    fn squares(&self) -> Vec<&Square> {
+        self.grid.iter().flat_map(|row| row.iter()).collect()
+    }
+
     pub fn is_top(&self, player: piece::Player, point: &Point) -> bool {
-        self.at(point).ok().map_or(false, |p| p.top_player().map_or(false, |x| x == player))
+        self.at(point).ok()
+            .and_then(|square| square.top_player())
+            .map(|x| x == player)
+            .unwrap_or(false)
+    }
+
+    /// Checks to see if all spaces have at least one piece
+    fn full(&self) -> bool {
+        !self.squares().iter().any(|sq| sq.pieces.is_empty())
     }
 
     fn follow(&self,
-              starts: &Vec<Point>,
-              dirs: &Vec<Direction>,
+              starts: &mut VecDeque<Point>,
               player: Player)
               -> BTreeSet<Point> {
-        let mut visited = starts.iter()
-                                .filter(|p| self.is_top(player, &p))
-                                .map(|p| *p)
-                                .collect::<BTreeSet<_>>();
-        let mut paths = visited.iter()
-                               .map(|p| Path::new(*p))
-                               .collect::<VecDeque<_>>();
+        let mut connected = BTreeSet::new();
+        let mut visited = BTreeSet::new();
 
-        while let Some(path) = paths.pop_front() {
-            let start = path.walk(self.size());
-            for dir in dirs.iter() {
-                if let Some(p) = dir.adjust(&start, 1, self.size()) {
-                    if !visited.contains(&p) && self.is_top(player, &p) {
-                        let mut new_path = path.clone();
-                        new_path.steps.push(*dir);
-                        paths.push_back(new_path);
-                        visited.insert(p);
+        while let Some(start) = starts.pop_front() {
+            visited.insert(start);
+            if self.is_top(player, &start) {
+                connected.insert(start);
+                for point in Direction::neighbors(&start, self.size()) {
+                    if !visited.contains(&point) {
+                        starts.push_back(point)
                     }
                 }
             }
         }
-        visited
+        connected
     }
 
-    /// Checks for the winner
+    /// Checks for the winner via a road win
     ///
     /// Uses follow to go from the right wall as far left as possible for each
     /// player, and then uses follow to go from the bottom wall as far up as
@@ -175,36 +156,99 @@ impl Board {
     /// Returns when the first winner is found. It will give a weird (wrong?)
     /// answer when a move causes both players to "win". Is there a rule about
     /// that?
-    pub fn check_winner(&self) -> Option<piece::Player> {
-        let dirs = vec![Direction::Right, Direction::Down, Direction::Up];
-        let points = (0..self.size())
-                         .map(|y| Point { x: 0, y: y })
-                         .collect::<Vec<_>>();
-        if self.follow(&points, &dirs, Player::One)
+    fn check_road_winner(&self) -> Option<piece::Player> {
+        let mut points = (0..self.size()).map(|y| Point { x: 0, y: y })
+                                         .collect::<VecDeque<_>>();
+        if self.follow(&mut points.clone(), Player::One)
                .iter()
                .any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::One);
         }
-        if self.follow(&points, &dirs, Player::Two)
+        if self.follow(&mut points, Player::Two)
                .iter()
                .any(|p| p.x == self.size() - 1) {
             return Some(piece::Player::Two);
         }
 
-        let dirs = vec![Direction::Up, Direction::Right, Direction::Left];
-        let points = (0..self.size())
-                         .map(|x| Point { x: x, y: 0 })
-                         .collect::<Vec<_>>();
-        if self.follow(&points, &dirs, Player::One)
+        let mut points = (0..self.size()).map(|x| Point { x: x, y: 0 })
+                                         .collect::<VecDeque<_>>();
+        if self.follow(&mut points.clone(), Player::One)
                .iter()
                .any(|p| p.y == self.size() - 1) {
             return Some(Player::One);
         }
-        if self.follow(&points, &dirs, Player::Two)
+        if self.follow(&mut points, Player::Two)
                .iter()
                .any(|p| p.y == self.size() - 1) {
             return Some(Player::Two);
         }
         None
+    }
+
+    /// Counts total pieces of each type used
+    fn piece_counts(&self) -> (u32, u32, u32, u32) {
+        let mut p1_flat = 0;
+        let mut p1_cap = 0;
+        let mut p2_flat = 0;
+        let mut p2_cap = 0;
+
+        for piece in self.squares().iter().flat_map(|sq| sq.pieces.iter()) {
+            if piece.owner == Player::One {
+                if piece.stone == piece::Stone::Capstone {
+                    p1_cap += 1;
+                } else {
+                    p1_flat += 1;
+                }
+            } else {
+                if piece.stone == piece::Stone::Capstone {
+                    p2_cap += 1;
+                } else {
+                    p2_flat += 1;
+                }
+            }
+        }
+        (p1_flat, p1_cap, p2_flat, p2_cap)
+    }
+
+    /// Checks for the winner via a flat win
+    ///
+    /// Counts the number of pieces laid, and if either player is out of
+    /// pieces, then tallies the points to determine the winner
+    pub fn check_flat_winner(&self) -> Option<piece::Player> {
+        // Max number of each stones that can be had
+        // Indexed with board size - 4
+        let flat_counts = [15, 20, 30, 40, 50];
+        let capstone_counts = [0, 1, 1, 2, 2];
+        let flats = flat_counts[self.size() - 4];
+        let caps = capstone_counts[self.size() - 4];
+
+        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.piece_counts();
+        let pieces_empty = (flats <= p1_flat && caps <= p1_cap) ||
+                           (flats <= p2_flat && caps <= p2_cap);
+
+        if pieces_empty || self.full() {
+            let mut p1_top = 0;
+            let mut p2_top = 0;
+
+            for square in self.squares().iter() {
+                match square.top_player() {
+                    Some(Player::One) => p1_top += 1,
+                    Some(Player::Two) => p2_top += 1,
+                    None => (),
+                }
+            }
+
+            //Tie goes to p2 (rules claim ambiguity, I don't want ties)
+            if p1_top > p2_top {
+                return Some(Player::One);
+            } else {
+                return Some(Player::Two);
+            }
+        }
+        None
+    }
+
+    pub fn check_winner(&self) -> Option<Player> {
+        self.check_road_winner().or(self.check_flat_winner())
     }
 }

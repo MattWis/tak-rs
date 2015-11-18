@@ -13,14 +13,10 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn adjust(&self, pt: &Option<Point>, offset: usize, size: usize) -> Option<Point> {
-        let point = match *pt {
-            Some(p) => p,
-            None => return None,
-        };
+    pub fn adjust(&self, point: &Point, offset: usize, size: usize) -> Option<Point> {
         match self {
             &Direction::Right => if point.x + offset < size {
-                Some(point::Point {
+                Some(Point {
                     x: point.x + offset,
                     y: point.y,
                 })
@@ -28,7 +24,7 @@ impl Direction {
                 None
             },
             &Direction::Left => if point.x >= offset {
-                Some(point::Point {
+                Some(Point {
                     x: point.x - offset,
                     y: point.y,
                 })
@@ -36,7 +32,7 @@ impl Direction {
                 None
             },
             &Direction::Up => if point.y + offset < size {
-                Some(point::Point {
+                Some(Point {
                     x: point.x,
                     y: point.y + offset,
                 })
@@ -44,7 +40,7 @@ impl Direction {
                 None
             },
             &Direction::Down => if point.y >= offset {
-                Some(point::Point {
+                Some(Point {
                     x: point.x,
                     y: point.y - offset,
                 })
@@ -52,6 +48,17 @@ impl Direction {
                 None
             },
         }
+    }
+
+    fn all() -> Vec<Direction> {
+        vec![Direction::Right, Direction::Left, Direction::Down, Direction::Up]
+    }
+
+    /// Gives all of the neighbors of point, assuming a board size
+    pub fn neighbors(point: &Point, size: usize) -> Vec<Point> {
+        Direction::all().iter()
+                        .filter_map(|d| d.adjust(point, 1, size))
+                        .collect::<Vec<_>>()
     }
 }
 
