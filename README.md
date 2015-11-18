@@ -10,10 +10,6 @@ application that will validate moves and declare a winner. From there it may
 turn into an AI project, or a nice GUI, or a webapp for two people to play
 online. (Or some combination of the three.)
 
-## TODO
-
-1. Only can move piles you control
-
 ## Writing games of tak
 
 I need a good way to transcribe moves as strings, so I am borrowing from the
