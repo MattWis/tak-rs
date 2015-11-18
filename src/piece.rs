@@ -25,6 +25,15 @@ pub enum Player {
     Two,
 }
 
+impl Player {
+    pub fn other(&self) -> Player {
+        match self {
+            &Player::One => Player::Two,
+            &Player::Two => Player::One,
+        }
+    }
+}
+
 impl fmt::Display for Player {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

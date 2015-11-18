@@ -64,7 +64,7 @@ impl Direction {
 
 #[derive(Debug)]
 pub enum Turn {
-    Placement {
+    Place {
         point: point::Point,
         piece: piece::Piece,
     },
@@ -89,7 +89,7 @@ impl FromStr for Turn {
             None => return Err(()),
         };
         if let Ok(piece) = s.parse::<piece::Piece>() {
-            Ok(Turn::Placement {
+            Ok(Turn::Place {
                 point: point,
                 piece: piece,
             })

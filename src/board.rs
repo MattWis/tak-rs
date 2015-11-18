@@ -50,7 +50,7 @@ impl Square {
         string.push_str(&space);
     }
 
-    fn top_player(&self) -> Option<Player> {
+    pub fn top_player(&self) -> Option<Player> {
         self.pieces.last().and_then(|piece|
             if piece.stone == piece::Stone::Standing {
                 None
@@ -109,7 +109,7 @@ impl Board {
         self.grid.len()
     }
 
-    fn squares(&self) -> Vec<&Square> {
+    pub fn squares(&self) -> Vec<&Square> {
         self.grid.iter().flat_map(|row| row.iter()).collect()
     }
 
@@ -121,11 +121,41 @@ impl Board {
     }
 
     /// Checks to see if all spaces have at least one piece
-    fn full(&self) -> bool {
+    pub fn full(&self) -> bool {
         !self.squares().iter().any(|sq| sq.pieces.is_empty())
     }
 
-    fn follow(&self,
+
+    // Number of stones which can be played on this sized board
+    pub fn piece_limits(&self) -> (u32, u32) {
+        // Max number of each stones that can be had
+        // Indexed with board size - 4
+        let flat_counts = [15, 20, 30, 40, 50];
+        let flats = flat_counts[self.size() - 4];
+        let capstone_counts = [0, 1, 1, 2, 2];
+        let caps = capstone_counts[self.size() - 4];
+        (flats, caps)
+    }
+
+    pub fn used_up(&self, piece: &Piece) -> bool {
+        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.piece_counts();
+        let (flats, caps) = self.piece_limits();
+        if piece.owner == Player::One {
+            if piece.stone == piece::Stone::Capstone {
+                return p1_cap >= caps
+            } else {
+                return p1_flat >= flats
+            }
+        } else {
+            if piece.stone == piece::Stone::Capstone {
+                return p2_cap >= caps
+            } else {
+                return p2_flat >= flats
+            }
+        }
+    }
+
+    pub fn follow(&self,
               starts: &mut VecDeque<Point>,
               player: Player)
               -> BTreeSet<Point> {
@@ -146,47 +176,9 @@ impl Board {
         connected
     }
 
-    /// Checks for the winner via a road win
-    ///
-    /// Uses follow to go from the right wall as far left as possible for each
-    /// player, and then uses follow to go from the bottom wall as far up as
-    /// possible. If the string of connected pieces reaches the far wall, it's
-    /// a win.
-    ///
-    /// Returns when the first winner is found. It will give a weird (wrong?)
-    /// answer when a move causes both players to "win". Is there a rule about
-    /// that?
-    fn check_road_winner(&self) -> Option<piece::Player> {
-        let mut points = (0..self.size()).map(|y| Point { x: 0, y: y })
-                                         .collect::<VecDeque<_>>();
-        if self.follow(&mut points.clone(), Player::One)
-               .iter()
-               .any(|p| p.x == self.size() - 1) {
-            return Some(piece::Player::One);
-        }
-        if self.follow(&mut points, Player::Two)
-               .iter()
-               .any(|p| p.x == self.size() - 1) {
-            return Some(piece::Player::Two);
-        }
-
-        let mut points = (0..self.size()).map(|x| Point { x: x, y: 0 })
-                                         .collect::<VecDeque<_>>();
-        if self.follow(&mut points.clone(), Player::One)
-               .iter()
-               .any(|p| p.y == self.size() - 1) {
-            return Some(Player::One);
-        }
-        if self.follow(&mut points, Player::Two)
-               .iter()
-               .any(|p| p.y == self.size() - 1) {
-            return Some(Player::Two);
-        }
-        None
-    }
 
     /// Counts total pieces of each type used
-    fn piece_counts(&self) -> (u32, u32, u32, u32) {
+    pub fn piece_counts(&self) -> (u32, u32, u32, u32) {
         let mut p1_flat = 0;
         let mut p1_cap = 0;
         let mut p2_flat = 0;
@@ -210,45 +202,4 @@ impl Board {
         (p1_flat, p1_cap, p2_flat, p2_cap)
     }
 
-    /// Checks for the winner via a flat win
-    ///
-    /// Counts the number of pieces laid, and if either player is out of
-    /// pieces, then tallies the points to determine the winner
-    pub fn check_flat_winner(&self) -> Option<piece::Player> {
-        // Max number of each stones that can be had
-        // Indexed with board size - 4
-        let flat_counts = [15, 20, 30, 40, 50];
-        let capstone_counts = [0, 1, 1, 2, 2];
-        let flats = flat_counts[self.size() - 4];
-        let caps = capstone_counts[self.size() - 4];
-
-        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.piece_counts();
-        let pieces_empty = (flats <= p1_flat && caps <= p1_cap) ||
-                           (flats <= p2_flat && caps <= p2_cap);
-
-        if pieces_empty || self.full() {
-            let mut p1_top = 0;
-            let mut p2_top = 0;
-
-            for square in self.squares().iter() {
-                match square.top_player() {
-                    Some(Player::One) => p1_top += 1,
-                    Some(Player::Two) => p2_top += 1,
-                    None => (),
-                }
-            }
-
-            //Tie goes to p2 (rules claim ambiguity, I don't want ties)
-            if p1_top > p2_top {
-                return Some(Player::One);
-            } else {
-                return Some(Player::Two);
-            }
-        }
-        None
-    }
-
-    pub fn check_winner(&self) -> Option<Player> {
-        self.check_road_winner().or(self.check_flat_winner())
-    }
 }
