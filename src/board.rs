@@ -32,9 +32,9 @@ impl Square {
         Ok(())
     }
 
-    pub fn place_piece(&mut self, piece: Piece) -> Result<(), String> {
+    pub fn place_piece(&mut self, piece: Piece) -> Result<(), &str> {
         if self.len() != 0 {
-            return Err("Cannot place stone on top of existing stone.".into());
+            return Err("Cannot place stone on top of existing stone.");
         }
         self.pieces.push(piece);
         Ok(())
@@ -51,14 +51,12 @@ impl Square {
     }
 
     fn top_player(&self) -> Option<Player> {
-        match self.pieces.last() {
-            Some(piece) => if piece.stone == piece::Stone::Standing {
+        self.pieces.last().and_then(|piece|
+            if piece.stone == piece::Stone::Standing {
                 None
             } else {
                 Some(piece.owner)
-            },
-            None => None,
-        }
+            })
     }
 }
 
@@ -116,27 +114,18 @@ impl fmt::Display for Board {
 
 impl Board {
     pub fn new(board_size: usize) -> Board {
+        assert!(board_size >= 4 && board_size <= 8);
         Board { grid: vec![vec![Square::new(); board_size]; board_size] }
     }
 
-    pub fn at(&self, point: &Point) -> Result<&Square, String> {
-        match self.grid.get(point.y) {
-            Some(row) => match row.get(point.x) {
-                Some(square) => Ok(square),
-                None => Err("Invalid point".into()),
-            },
-            None => Err("Invalid point".into()),
-        }
+    pub fn at(&self, point: &Point) -> Result<&Square, &str> {
+        let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
+        row.get(point.x).ok_or("Invalid point")
     }
 
-    pub fn at_mut(&mut self, point: &Point) -> Result<&mut Square, String> {
-        match self.grid.get_mut(point.y) {
-            Some(row) => match row.get_mut(point.x) {
-                Some(square) => Ok(square),
-                None => Err("Invalid point".into()),
-            },
-            None => Err("Invalid point".into()),
-        }
+    pub fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
+        let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
+        row.get_mut(point.x).ok_or("Invalid point")
     }
 
     pub fn size(&self) -> usize {
@@ -144,13 +133,7 @@ impl Board {
     }
 
     pub fn is_top(&self, player: piece::Player, point: &Point) -> bool {
-        match self.at(point) {
-            Ok(p) => match p.top_player() {
-                Some(x) => x == player,
-                None => false,
-            },
-            Err(_) => false,
-        }
+        self.at(point).ok().map_or(false, |p| p.top_player().map_or(false, |x| x == player))
     }
 
     fn follow(&self,
