@@ -12,8 +12,7 @@ online. (Or some combination of the three.)
 
 ## TODO
 
-1. Concept of who's turn it is
-2. Only can move piles you control
+1. Only can move piles you control
 
 ## Writing games of tak
 

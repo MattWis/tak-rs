@@ -14,32 +14,32 @@ fn play_no_win(moves: Vec<&str>, game: &mut Game) -> () {
 #[test]
 fn basic_placement() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1S1", "a2F2", "d3C2"], &mut game);
+    play_no_win(vec!["a2F2", "d1F1", "a1S1", "d3C2"], &mut game);
     assert_eq!(game.to_string(),
                "_______________\n\
                 |  |  |  |  |  \n\
                 |  |  |  |  |  \n\
                 |  |  |  |C2|  \n\
                 |F2|  |  |  |  \n\
-                |S1|  |  |  |  \n");
+                |S1|  |  |F1|  \n");
 }
 
 #[test]
 fn basic_movement() {
     let mut game = Game::new(4);
-    play_no_win(vec!["a1S1", "a2F2", "a1U1", "a2R12"], &mut game);
+    play_no_win(vec!["a2F2", "a1F1", "a1U1", "b1F2", "a2R12"], &mut game);
     assert_eq!(game.to_string(),
                "____________\n\
                 |  |  |  |  \n\
                 |  |  |  |  \n\
-                |  |F2|S1|  \n\
-                |  |  |  |  \n");
+                |  |F2|F1|  \n\
+                |  |F2|  |  \n");
 }
 
 #[test]
 fn invalid_movement_onto_standing() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1S1", "a2F2"], &mut game);
+    play_no_win(vec!["a2F2", "a4F1", "a1S1"], &mut game);
     match game.play("a2D1") {
         Ok(_) => panic!(""),
         Err(_) => return,
@@ -48,9 +48,25 @@ fn invalid_movement_onto_standing() {
 }
 
 #[test]
+fn starting_order() {
+    match Game::new(4).play("a2F1") {
+        Ok(_) => panic!(""),
+        Err(_) => return,
+    }
+}
+
+#[test]
+fn starting_stone() {
+    match Game::new(4).play("a2S2") {
+        Ok(_) => panic!(""),
+        Err(_) => return,
+    }
+}
+
+#[test]
 fn invalid_movement_onto_capstone() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1C1", "a2F2"], &mut game);
+    play_no_win(vec!["a2F2", "c3F1", "a1C1"], &mut game);
     match game.play("a2D1") {
         Ok(_) => panic!(""),
         Err(_) => return,
@@ -60,14 +76,14 @@ fn invalid_movement_onto_capstone() {
 #[test]
 fn squash() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1S1", "a2C2", "a2D1"], &mut game);
+    play_no_win(vec!["b2F2", "b1F1", "a1S1", "a2C2", "a2D1"], &mut game);
     assert_eq!(game.to_string(),
                "_________________________\n\
                 |    |    |    |    |    \n\
                 |    |    |    |    |    \n\
                 |    |    |    |    |    \n\
-                |    |    |    |    |    \n\
-                |F1C2|    |    |    |    \n");
+                |    |F2  |    |    |    \n\
+                |F1C2|F1  |    |    |    \n");
 }
 
 #[test]
@@ -81,12 +97,12 @@ fn win_across() {
 
 #[test]
 fn almost() {
-    play_no_win(vec!["a1F1", "b1F1", "c1F1"], &mut Game::new(4));
+    play_no_win(vec!["a2F2", "a1F1", "b1F1", "b2F2", "c1F1"], &mut Game::new(4));
 }
 
 #[test]
 fn almost2() {
-    play_no_win(vec!["b1F1", "c1F1", "d1F1"], &mut Game::new(4));
+    play_no_win(vec!["a2F2", "b1F1", "c1F1", "b2F2", "d1F1"], &mut Game::new(4));
 }
 
 #[test]

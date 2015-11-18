@@ -62,11 +62,14 @@ impl Game {
     }
 
     fn place(&mut self, point: &Point, piece: &Piece) -> Result<(), String> {
-        //TODO: First 2 turns order
-        if self.next != piece.owner {
-            if self.history.len() > 2 {
+        if self.history.len() >= 2 {
+            if self.next != piece.owner {
                 return Err("Player must play own piece".into())
             }
+        } else if self.next == piece.owner {
+            return Err("Play opposite piece on first turn".into())
+        } else if piece.stone != piece::Stone::Flat {
+            return Err("Play flat piece on first turn".into())
         }
         if self.board.used_up(piece) {
             return Err("Player has used all of that type of stone".into())
