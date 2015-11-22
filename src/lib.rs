@@ -111,6 +111,13 @@ impl Game {
 
             mem::replace(square, board::Square::new())
         };
+
+        // Enforce carry limit
+        if offsets.len() > self.size() {
+            if !offsets.iter().take(offsets.len() - self.size()).all(|o| *o == 0) {
+                return Err("Cannot move more than the carry limit".into());
+            }
+        }
         let points = offsets.iter()
                             .map(|z| dir.adjust(point, *z, self.size()))
                             .collect::<Vec<_>>();

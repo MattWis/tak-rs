@@ -10,6 +10,10 @@ application that will validate moves and declare a winner. From there it may
 turn into an AI project, or a nice GUI, or a webapp for two people to play
 online. (Or some combination of the three.)
 
+## TODO
+
+1. Verify movements have a valid offset sequence
+
 ## Writing games of tak
 
 I need a good way to transcribe moves as strings, so I am borrowing from the
@@ -35,6 +39,17 @@ first line is weird, since the players are laying stones of the opposite color.
 As an example, here's a game I played (poorly) against myself on a 5x5 board.
 (But seriously, I haven't even figured out how to use standing stones or my
 Capstone effectively.)
+
+### Carry limit
+
+When moving a pile, each additional digit refers to an offset that the stone is
+moved by. So to move a single stone up one spot, it is written a1U1. (Assuming
+the stone is at a1.) To move a pile of 4 up, leaving one stone at each spot
+(including the initial position, it's a1U0123. Finally, make sure to prefix
+your move with enough 0s so that you do not violate the carry limit.
+
+### Example game
+
 
 * a1F2 e1F1
 * d2F1 c3F2

@@ -73,6 +73,36 @@ fn starting_stone() {
 }
 
 #[test]
+fn move_offstage() {
+    let mut game = Game::new(5);
+    play_no_win(vec!["a1F2", "a2F1"], &mut game);
+    match game.play("a2L1") {
+        Ok(_) => panic!(""),
+        Err(_) => return,
+    }
+
+}
+
+#[test]
+fn under_carry_limit() {
+    let mut game = Game::new(5);
+    play_no_win(vec!["a1F2", "a2F1", "a2D1", "b1F2", "a2F1", "b1L1", "a2D1",
+                     "b1F2", "a2F1", "b1L1", "a2D1", "b1F2", "a1R011111"],
+                &mut game);
+}
+
+#[test]
+fn carry_limit() {
+    let mut game = Game::new(5);
+    play_no_win(vec!["a1F2", "a2F1", "a2D1", "b1F2", "a2F1", "b1L1", "a2D1",
+                     "b1F2", "a2F1", "b1L1", "a2D1", "b1F2"], &mut game);
+    match game.play("a1R111111") {
+        Ok(_) => panic!(""),
+        Err(_) => return,
+    }
+}
+
+#[test]
 fn invalid_movement_onto_capstone() {
     let mut game = Game::new(5);
     play_no_win(vec!["a2F2", "c3F1", "a1C1"], &mut game);
