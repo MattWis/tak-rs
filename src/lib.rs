@@ -118,6 +118,11 @@ impl Game {
                 return Err("Cannot move more than the carry limit".into());
             }
         }
+
+        let mut offset_pairs = offsets.iter().zip(offsets.iter().skip(1));
+        if offset_pairs.any(|(x, y)| *y - *x > 1) {
+            return Err("Subseqent offsets can only vary by 1".into());
+        }
         let points = offsets.iter()
                             .map(|z| dir.adjust(point, *z, self.size()))
                             .collect::<Vec<_>>();
