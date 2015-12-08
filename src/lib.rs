@@ -1,3 +1,4 @@
+extern crate rustc_serialize;
 use std::collections::VecDeque;
 use std::fmt;
 use std::mem;
@@ -14,6 +15,7 @@ pub use piece::Player;
 pub use piece::Piece;
 pub use point::Point;
 
+#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Game {
     board: Board,
     next: Player,

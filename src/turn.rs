@@ -4,7 +4,7 @@ use piece;
 use point;
 use point::Point;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Direction {
     Right,
     Left,
@@ -62,7 +62,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Turn {
     Place {
         point: point::Point,

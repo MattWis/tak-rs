@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Stone {
     Flat,
     Standing,
@@ -19,7 +19,7 @@ impl fmt::Display for Stone {
 }
 
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Player {
     One,
     Two,
@@ -43,7 +43,7 @@ impl fmt::Display for Player {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub struct Piece {
     pub stone: Stone,
     pub owner: Player,

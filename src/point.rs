@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, RustcDecodable, RustcEncodable)]
 pub struct Point {
     pub x: usize,
     pub y: usize,

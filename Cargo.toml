@@ -7,3 +7,6 @@ homepage = "https://github.com/MattWis/tak-rs.git"
 license = "MIT"
 readme = "README.md"
 description = "Implementation of Tak (from the Kingkiller Chronicles)"
+
+[dependencies]
+rustc-serialize = "0.3"

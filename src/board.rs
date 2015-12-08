@@ -9,7 +9,7 @@ use piece;
 use point::Point;
 use turn::Direction;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Square {
     pub pieces: Vec<Piece>,
 }
@@ -76,7 +76,7 @@ impl Square {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Board {
     grid: Vec<Vec<Square>>,
 }
