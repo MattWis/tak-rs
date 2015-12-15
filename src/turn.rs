@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
-use piece;
-use point;
 use point::Point;
+use piece::Piece;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Direction {
@@ -65,13 +64,14 @@ impl Direction {
 #[derive(Clone, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Turn {
     Place {
-        point: point::Point,
-        piece: piece::Piece,
+        point: Point,
+        piece: Piece,
     },
     Slide {
-        point: point::Point,
+        num_pieces: usize,
+        point: Point,
         direction: Direction,
-        offsets: Vec<usize>,
+        drops: Vec<usize>,
     },
 }
 
@@ -79,45 +79,49 @@ impl FromStr for Turn {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() < 4 {
-            return Err(());
-        }
-        let point = try!(s.parse::<point::Point>());
-        let mut chars = s.chars();
-        let turn = match chars.nth(2) {
-            Some(c) => c,
-            None => return Err(()),
-        };
-        if let Ok(piece) = s.parse::<piece::Piece>() {
+        let places = "abcdefgh";
+        let slides = "012345678";
+
+        let first = s.chars().nth(0).unwrap();
+        if places.chars().position(|x| x == first).is_some() {
+            // My placement method - See README
+            let point = try!(s[0..2].parse::<Point>());
+            let piece = try!(s[2..4].parse::<Piece>());
             Ok(Turn::Place {
                 point: point,
                 piece: piece,
             })
-        } else {
-            let direction = match turn {
-                'R' => Direction::Right,
-                'L' => Direction::Left,
-                'U' => Direction::Up,
-                'D' => Direction::Down,
+        } else if let Some(pieces) = slides.chars().position(|x| x == first) {
+            // Slide - PTN Notation
+            let point = try!(s[1..3].parse::<Point>());
+            let direction = match s.chars().nth(3) {
+                Some('>') => Direction::Right,
+                Some('<') => Direction::Left,
+                Some('+') => Direction::Up,
+                Some('-') => Direction::Down,
                 _ => return Err(()),
             };
-            let offsets = chars.map(|c| {
+            let drops = s.chars().skip(4).map(|c| {
                                    match c.to_digit(10) {
                                        Some(x) => x as usize,
-                                       None => 100,
+                                       None => 100, // Bad error handling...
                                    }
                                })
                                .collect::<Vec<_>>();
-
-            if offsets.iter().any(|x| *x > 99) {
+            if drops.iter().any(|x| *x > 99) {
                 return Err(());
             }
-
+            if drops.iter().any(|x| *x < 1) {
+                return Err(());
+            }
             Ok(Turn::Slide {
+                num_pieces: pieces,
                 point: point,
                 direction: direction,
-                offsets: offsets,
+                drops: drops,
             })
+        } else {
+            Err(())
         }
     }
 }

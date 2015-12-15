@@ -76,11 +76,11 @@ impl FromStr for Piece {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() < 4 {
+        if s.len() != 2 {
             return Err(());
         }
         let mut chars = s.chars();
-        let stone_type = chars.nth(2).unwrap_or('0');
+        let stone_type = chars.nth(0).unwrap_or('0');
         if "FSC".contains(stone_type) {
             let stone = match stone_type {
                 'F' => Stone::Flat,

@@ -11,7 +11,7 @@ impl FromStr for Point {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() < 2 {
+        if s.len() != 2 {
             return Err(());
         }
         let mut chars = s.chars();

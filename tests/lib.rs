@@ -28,7 +28,7 @@ fn basic_placement() {
 #[test]
 fn basic_movement() {
     let mut game = Game::new(4);
-    play_no_win(vec!["a2F2", "a1F1", "a1U1", "b1F2", "a2R12"], &mut game);
+    play_no_win(vec!["a2F2", "a1F1", "1a1+1", "b1F2", "2a2>11"], &mut game);
     assert_eq!(game.to_string(),
                "____________\n\
                 |  |  |  |  \n\
@@ -40,8 +40,8 @@ fn basic_movement() {
 #[test]
 fn must_own_pile_to_move() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1F2", "a2F1", "a2D1"], &mut game);
-    match game.play("a1R01", Player::Two) {
+    play_no_win(vec!["a1F2", "a2F1", "1a2-1"], &mut game);
+    match game.play("1a1>1", Player::Two) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
@@ -52,7 +52,7 @@ fn must_own_pile_to_move() {
 fn invalid_movement_onto_standing() {
     let mut game = Game::new(5);
     play_no_win(vec!["a2F2", "a4F1", "a1S1"], &mut game);
-    match game.play("a2D1", Player::Two) {
+    match game.play("1a2-1", Player::Two) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
@@ -78,27 +78,26 @@ fn starting_stone() {
 fn move_offstage() {
     let mut game = Game::new(5);
     play_no_win(vec!["a1F2", "a2F1"], &mut game);
-    match game.play("a2L1", Player::One) {
+    match game.play("1a2<1", Player::One) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
-
 }
 
 #[test]
 fn under_carry_limit() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1F2", "a2F1", "a2D1", "b1F2", "a2F1", "b1L1", "a2D1",
-                     "b1F2", "a2F1", "b1L1", "a2D1", "b1F2", "a1R011111"],
+    play_no_win(vec!["a1F2", "a2F1", "1a2-1", "b1F2", "a2F1", "1b1<1", "1a2-1",
+                     "b1F2", "a2F1", "1b1<1", "1a2-1", "b1F2", "5a1>5"],
                 &mut game);
 }
 
 #[test]
 fn carry_limit() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1F2", "a2F1", "a2D1", "b1F2", "a2F1", "b1L1", "a2D1",
-                     "b1F2", "a2F1", "b1L1", "a2D1", "b1F2"], &mut game);
-    match game.play("a1R111111", Player::One) {
+    play_no_win(vec!["a1F2", "a2F1", "1a2-1", "b1F2", "a2F1", "1b1<1", "1a2-1",
+                     "b1F2", "a2F1", "1b1<1", "1a2-1", "b1F2"], &mut game);
+    match game.play("6a1>6", Player::One) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
@@ -107,9 +106,9 @@ fn carry_limit() {
 #[test]
 fn movement_amount() {
     let mut game = Game::new(5);
-    play_no_win(vec!["a1F2", "a2F1", "a2D1", "b1F2", "a2F1", "b1L1", "a2D1",
+    play_no_win(vec!["a1F2", "a2F1", "1a2-1", "b1F2", "a2F1", "1b1<1", "1a2-1",
                      "b1F2"], &mut game);
-    match game.play("a1R0022", Player::One) {
+    match game.play("4a1>022", Player::One) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
@@ -119,7 +118,7 @@ fn movement_amount() {
 fn invalid_movement_onto_capstone() {
     let mut game = Game::new(5);
     play_no_win(vec!["a2F2", "c3F1", "a1C1"], &mut game);
-    match game.play("a2D1", Player::Two) {
+    match game.play("1a2-1", Player::Two) {
         Ok(_) => panic!(""),
         Err(_) => return,
     }
@@ -128,7 +127,7 @@ fn invalid_movement_onto_capstone() {
 #[test]
 fn squash() {
     let mut game = Game::new(5);
-    play_no_win(vec!["b2F2", "b1F1", "a1S1", "a2C2", "b3F1", "a2D1"],
+    play_no_win(vec!["b2F2", "b1F1", "a1S1", "a2C2", "b3F1", "1a2-1"],
                 &mut game);
     assert_eq!(game.to_string(),
                "_________________________\n\
@@ -176,21 +175,11 @@ fn cant_win_with_standing() {
 }
 
 #[test]
-fn readme_game() {
-    let mut game = Game::new(5);
-    let m = vec!["a1F2", "e1F1", "d2F1", "c3F2", "d3F1", "d4F2", "d5F1", "c4F2", "e2F1", "c3R1",
-                 "c3F1", "b4F2", "e4F1", "e3F2", "a4F1", "b3F2", "d5D1", "b1F2", "c3L1", "b2F2",
-                 "a4R1", "c3F2", "e4D1", "c2F2", "d2L1", "c5F2", "e3L12"];
-    play_no_win(m, &mut game);
-    assert_eq!(game.play("d3L012", Player::Two).unwrap(), Some(Player::Two));
-}
-
-#[test]
 fn all_pieces() {
     let mut game = Game::new(4);
     let m = vec!["a2F2", "a1F1", "a3F1", "a4F2", "b2F1", "b1F2", "b4F1", "b3F2", "c1F1", "c2F2",
-                 "c3F1", "c4F2", "d2F1", "d1F2", "d4F1", "d1L1", "d1F1", "b1L1", "b1F1", "a2R1",
-                 "a2F1", "c2R1", "c2F1", "b3L1", "b3F1", "a4R1", "a4F1", "c4L1"];
+                 "c3F1", "c4F2", "d2F1", "d1F2", "d4F1", "1d1<1", "d1F1", "1b1<1", "b1F1", "1a2>1",
+                 "a2F1", "1c2>1", "c2F1", "1b3<1", "b3F1", "1a4>1", "a4F1", "1c4<1"];
     play_no_win(m, &mut game);
     assert_eq!(game.play("c4F1", Player::One).unwrap(), Some(Player::One));
 }
@@ -198,11 +187,11 @@ fn all_pieces() {
 #[test]
 fn all_pieces_with_cap() {
     let mut game = Game::new(5);
-    let m = vec!["e1F2", "a1F1", "a2C1", "e1U1", "a3F1", "e2D1", "a4F1", "e1U1", "b1F1", "e2D1",
-                 "b2F1", "e1U1", "b3F1", "e2D1", "b4F1", "e1U1", "c1F1", "e2D1", "c2F1", "e1U1",
-                 "c3F1", "e2D1", "c4F1", "e1U1", "d1F1", "e2D1", "d2F1", "e1U1", "d3F1", "e2D1",
-                 "d4F1", "e1U1", "d4L1", "e2L1", "d3L1", "d2D11", "d4F1", "d1L111", "d3F1",
-                 "c1U0001", "d2F1", "c2L11", "d1F1", "e1F2"];
+    let m = vec!["e1F2", "a1F1", "a2C1", "1e1+1", "a3F1", "1e2-1", "a4F1", "1e1+1", "b1F1", "1e2-1",
+                 "b2F1", "1e1+1", "b3F1", "1e2-1", "b4F1", "1e1+1", "c1F1", "1e2-1", "c2F1", "1e1+1",
+                 "c3F1", "1e2-1", "c4F1", "1e1+1", "d1F1", "1e2-1", "d2F1", "1e1+1", "d3F1", "1e2-1",
+                 "d4F1", "1e1+1", "1d4<1", "1e2<1", "1d3<1", "2d2-2", "d4F1", "3d1<3", "d3F1",
+                 "1c1+1", "d2F1", "2c2<2", "d1F1", "e1F2"];
     play_no_win(m, &mut game);
     assert_eq!(game.play("e5F1", Player::One).unwrap(), Some(Player::One));
 }
@@ -230,11 +219,11 @@ fn cannot_play_too_many_capstones() {
 #[test]
 fn cannot_play_too_many_flats() {
     let mut game = Game::new(5);
-    let m = vec!["e1F2", "a1F1", "a2F1", "e1U1", "a3F1", "e2D1", "a4F1", "e1U1", "b1F1", "e2D1",
-                 "b2F1", "e1U1", "b3F1", "e2D1", "b4F1", "e1U1", "c1F1", "e2D1", "c2F1", "e1U1",
-                 "c3F1", "e2D1", "c4F1", "e1U1", "d1F1", "e2D1", "d2F1", "e1U1", "d3F1", "e2D1",
-                 "d4F1", "e1U1", "d4L1", "e2L1", "d3L1", "d2D11", "d4F1", "d1L111", "d3F1",
-                 "c1U0001", "d2F1", "c2L11", "d1F1", "e1F2"];
+    let m = vec!["e1F2", "a1F1", "a2F1", "1e1+1", "a3F1", "1e2-1", "a4F1", "1e1+1", "b1F1", "1e2-1",
+                 "b2F1", "1e1+1", "b3F1", "1e2-1", "b4F1", "1e1+1", "c1F1", "1e2-1", "c2F1", "1e1+1",
+                 "c3F1", "1e2-1", "c4F1", "1e1+1", "d1F1", "1e2-1", "d2F1", "1e1+1", "d3F1", "1e2-1",
+                 "d4F1", "1e1+1", "1d4<1", "1e2<1", "1d3<1", "2d2-2", "d4F1", "3d1<3", "d3F1",
+                 "1c1+1", "d2F1", "2c2<2", "d1F1", "e1F2"];
     play_no_win(m, &mut game);
     match game.play("e5F1", Player::One) {
         Ok(_) => panic!(""),
@@ -256,9 +245,9 @@ fn convoluted_road_win() {
 fn example1() {
     let mut game = Game::new(5);
     let m = vec!["a1F2", "e1F1", "c3F1", "a3F2", "e3F1", "a4F2", "a2F1", "a5F2", "b4F1", "d3F2",
-                 "e2F1", "e4F2", "d2F1", "b2F2", "b4L1", "a3U1", "a3F1", "a4D122", "a4F1", "b3F2",
-                 "b4F1", "b3U1", "a4U1", "a4F2", "b3F1", "b4D11", "d4F1", "b5F2", "a5D12",
-                 "b3L111", "a5F1"];
+                 "e2F1", "e4F2", "d2F1", "b2F2", "1b4<1", "1a3+1", "a3F1", "3a4-12", "a4F1", "b3F2",
+                 "b4F1", "1b3+1", "1a4+1", "a4F2", "b3F1", "2b4-2", "d4F1", "b5F2", "2a5-11",
+                 "3b3<3", "a5F1"];
     play_no_win(m, &mut game);
-    assert_eq!(game.play("a4U01", Player::Two).unwrap(), Some(Player::Two));
+    assert_eq!(game.play("1a4+1", Player::Two).unwrap(), Some(Player::Two));
 }

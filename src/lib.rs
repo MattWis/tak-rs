@@ -77,8 +77,8 @@ impl Game {
             Turn::Place { ref point, ref piece } => {
                 try!(self.place(point, piece));
             }
-            Turn::Slide { ref point, ref direction, ref offsets } => {
-                try!(self.slide(point, direction, offsets));
+            Turn::Slide { ref num_pieces, ref point, ref direction, ref drops } => {
+                try!(self.slide(num_pieces, point, direction, drops));
             }
         }
         self.history.push(turn);
@@ -104,11 +104,11 @@ impl Game {
         Ok(())
     }
 
-    fn slide(&mut self, point: &Point, dir: &Direction, offsets: &Vec<usize>) -> Result<(), String> {
+    fn slide(&mut self, num_pieces: &usize, point: &Point, dir: &Direction, drops: &Vec<usize>) -> Result<(), String> {
         let cell = {
             let square = try!(self.board.at_mut(point));
-            if offsets.len() != square.len() {
-                return Err("Trying to move a different number of pieces than exist".into());
+            if *num_pieces > square.len() {
+                return Err("Trying to move more pieces than exist".into());
             }
             if square.mover() != Some(self.next) {
                 return Err("Must have control to move pile".into())
@@ -118,27 +118,33 @@ impl Game {
         };
 
         // Enforce carry limit
-        if offsets.len() > self.size() {
-            if !offsets.iter().take(offsets.len() - self.size()).all(|o| *o == 0) {
-                return Err("Cannot move more than the carry limit".into());
-            }
+        if *num_pieces > self.size() {
+            return Err("Cannot move more than the carry limit".into());
         }
 
-        let mut offset_pairs = offsets.iter().zip(offsets.iter().skip(1));
-        if offset_pairs.any(|(x, y)| *y - *x > 1) {
-            return Err("Subseqent offsets can only vary by 1".into());
+        if drops.iter().fold(0, |sum, x| sum + x) != *num_pieces {
+            return Err("Number of pieces claimed to move is diffent from number of pieces moved".into());
         }
-        let points = offsets.iter()
-                            .map(|z| dir.adjust(point, *z, self.size()))
-                            .collect::<Vec<_>>();
 
-        for (point, piece) in points.iter().zip(cell.pieces.iter()) {
-            let p = match *point {
+        let size = self.size();
+        let points = (0..).map(|x: usize| dir.adjust(point, x, size));
+
+        let first_drop = [cell.len() - *num_pieces];
+        let to_drop = first_drop.iter().chain(drops);
+        let mut pieces = cell.pieces.iter();
+
+        for (point, count) in points.zip(to_drop) {
+            let p = match point {
                 Some(x) => x,
                 None => return Err("".into()),
             };
             let square = try!(self.board.at_mut(&p));
-            try!(square.add_piece(*piece));
+            for _ in (0..*count) {
+                match pieces.next() {
+                    Some(piece) => try!(square.add_piece(*piece)),
+                    None => return Err("Used all pieces".into()),
+                }
+            }
         }
         Ok(())
     }
