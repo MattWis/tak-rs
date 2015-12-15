@@ -61,6 +61,24 @@ impl Direction {
     }
 }
 
+impl FromStr for Direction {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() != 1 {
+            Err(())
+        } else {
+            match s.chars().nth(0) {
+                Some('>') => Ok(Direction::Right),
+                Some('<') => Ok(Direction::Left),
+                Some('+') => Ok(Direction::Up),
+                Some('-') => Ok(Direction::Down),
+                _ => return Err(()),
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Turn {
     Place {
@@ -79,29 +97,8 @@ impl FromStr for Turn {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let places = "abcdefgh";
-        let slides = "012345678";
-
-        let first = s.chars().nth(0).unwrap();
-        if places.chars().position(|x| x == first).is_some() {
-            // My placement method - See README
-            let point = try!(s[0..2].parse::<Point>());
-            let piece = try!(s[2..4].parse::<Piece>());
-            Ok(Turn::Place {
-                point: point,
-                piece: piece,
-            })
-        } else if let Some(pieces) = slides.chars().position(|x| x == first) {
-            // Slide - PTN Notation
-            let point = try!(s[1..3].parse::<Point>());
-            let direction = match s.chars().nth(3) {
-                Some('>') => Direction::Right,
-                Some('<') => Direction::Left,
-                Some('+') => Direction::Up,
-                Some('-') => Direction::Down,
-                _ => return Err(()),
-            };
-            let drops = s.chars().skip(4).map(|c| {
+        fn get_drops(s: &str) -> Option<Vec<usize>> {
+            let drops = s.chars().map(|c| {
                                    match c.to_digit(10) {
                                        Some(x) => x as usize,
                                        None => 100, // Bad error handling...
@@ -109,17 +106,52 @@ impl FromStr for Turn {
                                })
                                .collect::<Vec<_>>();
             if drops.iter().any(|x| *x > 99) {
-                return Err(());
+                return None;
             }
             if drops.iter().any(|x| *x < 1) {
-                return Err(());
+                return None;
             }
-            Ok(Turn::Slide {
-                num_pieces: pieces,
-                point: point,
-                direction: direction,
-                drops: drops,
-            })
+            Some(drops)
+        }
+
+        let places = "abcdefgh";
+        let slides = "012345678";
+
+        let first = s.chars().nth(0).unwrap();
+        if places.chars().position(|x| x == first).is_some() {
+            // My placement method - See README
+            let point = try!(s[0..2].parse::<Point>());
+            if let Ok(piece) = s[2..4].parse::<Piece>() {
+                Ok(Turn::Place {
+                    point: point,
+                    piece: piece,
+                })
+            } else {
+                // Slide - abbreviated
+                let direction = try!(s[2..3].parse::<Direction>());
+                match get_drops(&s[3..]) {
+                    Some(drops) => Ok(Turn::Slide {
+                                          num_pieces: 1,
+                                          point: point,
+                                          direction: direction,
+                                          drops: drops,
+                                      }),
+                    None => Err(()),
+                }
+            }
+        } else if let Some(pieces) = slides.chars().position(|x| x == first) {
+            // Slide - PTN Notation Full
+            let point = try!(s[1..3].parse::<Point>());
+            let direction = try!(s[3..4].parse::<Direction>());
+            match get_drops(&s[4..]) {
+                Some(drops) => Ok(Turn::Slide {
+                                      num_pieces: pieces,
+                                      point: point,
+                                      direction: direction,
+                                      drops: drops,
+                                  }),
+                None => Err(()),
+            }
         } else {
             Err(())
         }
