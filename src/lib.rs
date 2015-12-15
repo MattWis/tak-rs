@@ -62,7 +62,10 @@ impl Game {
         self.board.to_string()
     }
 
-    pub fn play(&mut self, turn: &str) -> Result<Option<Player>, String> {
+    pub fn play(&mut self, turn: &str, player: Player) -> Result<Option<Player>, String> {
+        if self.next != player {
+            return Err("Not your turn".into());
+        }
         match turn.parse::<Turn>() {
             Ok(t) => self.play_parsed(t),
             Err(_) => Err("Invalid move".into()),
