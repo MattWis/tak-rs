@@ -4,6 +4,10 @@ This project attempts to follow semantic versioning.
 
 ### UNRELEASED
 
+### 0.5.1
+
+- [fixed] Removed possibility of killing Turn parser with bad input
+
 ### 0.5.0
 
 - [changed] allow full shortening of basic slides, ala "a1+"

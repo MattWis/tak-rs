@@ -52,6 +52,15 @@ fn basic_movement() {
 }
 
 #[test]
+fn break_parser() {
+    let mut game = Game::new(4);
+    match game.play("0a1", Player::One, None) {
+        Ok(_) => panic!(""),
+        Err(_) => return,
+    }
+}
+
+#[test]
 fn must_own_pile_to_move() {
     let mut game = Game::new(5);
     play_no_win(vec!["a1", "a2", "a2-"], &mut game);

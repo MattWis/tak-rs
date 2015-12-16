@@ -98,6 +98,11 @@ pub type TurnErr = ();
 impl FromStr for Turn {
     type Err = TurnErr;
     fn from_str(s: &str) -> Result<Self, TurnErr> {
+        // Pay a runtime cost for String slices to guarantee no panics
+        fn slice(s: &str, start: usize, end: usize) -> String {
+            s.chars().skip(start).take(end - start).collect::<String>()
+        }
+
         // Used for Turn::Slide
         fn get_drops(s: &str) -> Result<Vec<usize>, TurnErr> {
             let drops = s.chars().map(|c| {
@@ -116,28 +121,28 @@ impl FromStr for Turn {
             Ok(drops)
         }
 
-        if let Ok(stone) = s[0..1].parse::<Stone>() {
+        if let Ok(stone) = slice(s, 0, 1).parse::<Stone>() {
             // Placement - PTN notation Full
-            let point = try!(s[1..].parse::<Point>());
+            let point = try!(slice(s, 1, 3).parse::<Point>());
             Ok(Turn::Place {
                 point: point,
                 stone: stone,
             })
         } else if let Ok(pieces) = s[0..1].parse::<usize>() {
             // Slide - PTN Notation Full
-            let point = try!(s[1..3].parse::<Point>());
-            let direction = try!(s[3..4].parse::<Direction>());
-            let drops = try!(get_drops(&s[4..]));
+            let point = try!(slice(s, 1, 3).parse::<Point>());
+            let direction = try!(slice(s, 3, 4).parse::<Direction>());
+            let drops = try!(get_drops(&slice(s, 4, s.len())));
             Ok(Turn::Slide {
                 num_pieces: pieces,
                 point: point,
                 direction: direction,
                 drops: drops,
             })
-        } else if let Ok(point) = s[0..2].parse::<Point>() {
-            if let Ok(direction) = s[2..].parse::<Direction>() {
+        } else if let Ok(point) = slice(s, 0, 2).parse::<Point>() {
+            if let Ok(direction) = slice(s, 2, 3).parse::<Direction>() {
                 // Slide - abbreviated
-                let drops = try!(get_drops(&s[3..]));
+                let drops = try!(get_drops(&slice(s, 3, s.len())));
                 if drops.len() > 0 {
                    Ok(Turn::Slide {
                        num_pieces: 1,
