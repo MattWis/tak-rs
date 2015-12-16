@@ -27,13 +27,6 @@ impl fmt::Display for Game {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         try!(write!(f, "{}\n", self.board));
 
-        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.board.piece_counts();
-        let (flats, caps) = self.board.piece_limits();
-        try!(write!(f, "P1: {}/{} Flatstones\n", p1_flat, flats));
-        try!(write!(f, "P1: {}/{} Capstones\n", p1_cap, caps));
-        try!(write!(f, "P2: {}/{} Flatstones\n", p2_flat, flats));
-        try!(write!(f, "P2: {}/{} Capstones\n", p2_cap, caps));
-
         match self.check_winner() {
             Some(Player::One) => write!(f, "\nPlayer 1 Wins!"),
             Some(Player::Two) => write!(f, "\nPlayer 2 Wins!"),
@@ -104,9 +97,7 @@ impl Game {
         if self.board.used_up(&piece) {
             return Err("Player has used all of that type of stone".into())
         }
-        let square = try!(self.board.at_mut(point));
-        try!(square.place_piece(piece));
-        Ok(())
+        self.board.place_piece(point, piece)
     }
 
     fn slide(&mut self, num_pieces: &usize, point: &Point, dir: &Direction, drops: &Vec<usize>) -> Result<(), String> {
@@ -198,12 +189,12 @@ impl Game {
     /// Counts the number of pieces laid, and if either player is out of
     /// pieces, then tallies the points to determine the winner
     pub fn check_flat_winner(&self) -> Option<piece::Player> {
-        let (flats, caps) = self.board.piece_limits();
-        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.board.piece_counts();
-        let pieces_empty = (flats <= p1_flat && caps <= p1_cap) ||
-                           (flats <= p2_flat && caps <= p2_cap);
+        let used = (self.board.used_up(&Piece::new(Stone::Flat, Player::One)) &&
+                    self.board.used_up(&Piece::new(Stone::Capstone, Player::One))) ||
+                   (self.board.used_up(&Piece::new(Stone::Flat, Player::One)) &&
+                    self.board.used_up(&Piece::new(Stone::Capstone, Player::One)));
 
-        if pieces_empty || self.board.full() {
+        if used || self.board.full() {
             let mut p1_top = 0;
             let mut p2_top = 0;
 

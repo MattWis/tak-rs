@@ -36,7 +36,11 @@ fn basic_placement() {
                 |  |  |  |  |  \n\
                 |  |  |  |C2|  \n\
                 |F2|  |  |  |  \n\
-                |S1|  |  |F1|  \n");
+                |S1|  |  |F1|  \n\
+                P1: 2/20 Flatstones\n\
+                P1: 0/1 Capstones\n\
+                P2: 1/20 Flatstones\n\
+                P2: 1/1 Capstones\n");
 }
 
 #[test]
@@ -48,7 +52,11 @@ fn basic_movement() {
                 |  |  |  |  \n\
                 |  |  |  |  \n\
                 |  |F2|F1|  \n\
-                |  |F2|  |  \n");
+                |  |F2|  |  \n\
+                P1: 1/15 Flatstones\n\
+                P1: 0/0 Capstones\n\
+                P2: 2/15 Flatstones\n\
+                P2: 0/0 Capstones\n");
 }
 
 #[test]
@@ -158,7 +166,11 @@ fn squash() {
                 |    |    |    |    |    \n\
                 |    |F1  |    |    |    \n\
                 |    |F2  |    |    |    \n\
-                |F1C2|F1  |    |    |    \n");
+                |F1C2|F1  |    |    |    \n\
+                P1: 3/20 Flatstones\n\
+                P1: 0/1 Capstones\n\
+                P2: 1/20 Flatstones\n\
+                P2: 1/1 Capstones\n");
 }
 
 #[test]

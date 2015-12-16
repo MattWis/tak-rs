@@ -4,6 +4,10 @@ This project attempts to follow semantic versioning.
 
 ### UNRELEASED
 
+### 0.5.2
+
+- [added] Include PieceCounts in board struct
+
 ### 0.5.1
 
 - [fixed] Removed possibility of killing Turn parser with bad input

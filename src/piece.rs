@@ -69,6 +69,10 @@ pub struct Piece {
 }
 
 impl Piece {
+    pub fn new(stone: Stone, owner: Player) -> Piece {
+        Piece { stone: stone, owner: owner }
+    }
+
     // Flatten a standing stone if a capstone moves onto it
     // Cannot move onto capstone or standing stone otherwise
     pub fn move_onto(&self, base: &mut Piece) -> Result<(), &str> {

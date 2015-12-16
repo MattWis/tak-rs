@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use std::iter;
 use std::fmt;
 
+use piece::Stone;
 use piece::Piece;
 use piece::Player;
 use piece;
@@ -32,7 +33,7 @@ impl Square {
         Ok(())
     }
 
-    pub fn place_piece(&mut self, piece: Piece) -> Result<(), &str> {
+    fn place_piece(&mut self, piece: Piece) -> Result<(), &str> {
         if self.len() != 0 {
             return Err("Cannot place stone on top of existing stone.");
         }
@@ -76,9 +77,67 @@ impl Square {
     }
 }
 
+#[derive(Copy, Clone, Debug, RustcDecodable, RustcEncodable)]
+pub struct PieceCount {
+    p1_flat: usize,
+    p1_cap: usize,
+    p2_flat: usize,
+    p2_cap: usize,
+    max_flat: usize,
+    max_cap: usize,
+}
+
+impl PieceCount {
+    fn new(size: usize) -> PieceCount {
+        let flat_counts = [15, 20, 30, 40, 50];
+        let capstone_counts = [0, 1, 1, 2, 2];
+        PieceCount {
+            p1_flat: 0,
+            p1_cap: 0,
+            p2_flat: 0,
+            p2_cap: 0,
+            max_flat: flat_counts[size - 4],
+            max_cap: capstone_counts[size - 4],
+        }
+    }
+
+    fn add(&mut self, piece: &Piece) {
+        if piece.owner == Player::One {
+            if piece.stone == Stone::Capstone {
+                self.p1_cap += 1;
+            } else {
+                self.p1_flat += 1;
+            }
+        } else {
+            if piece.stone == Stone::Capstone {
+                self.p2_cap += 1;
+            } else {
+                self.p2_flat += 1;
+            }
+        }
+    }
+
+    fn used_up(&self, piece: &Piece) -> bool {
+        if piece.owner == Player::One {
+            if piece.stone == Stone::Capstone {
+                return self.p1_cap >= self.max_cap
+            } else {
+                return self.p1_flat >= self.max_flat
+            }
+        } else {
+            if piece.stone == Stone::Capstone {
+                return self.p2_cap >= self.max_cap
+            } else {
+                return self.p2_flat >= self.max_flat
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Board {
     grid: Vec<Vec<Square>>,
+    count: PieceCount,
 }
 
 impl fmt::Display for Board {
@@ -101,14 +160,23 @@ impl fmt::Display for Board {
             }
             full.push_str("\n");
         }
-        write!(f, "{}", full)
+        try!(write!(f, "{}", full));
+
+        try!(write!(f, "P1: {}/{} Flatstones\n", self.count.p1_flat, self.count.max_flat));
+        try!(write!(f, "P1: {}/{} Capstones\n", self.count.p1_cap, self.count.max_cap));
+        try!(write!(f, "P2: {}/{} Flatstones\n", self.count.p2_flat, self.count.max_flat));
+        write!(f, "P2: {}/{} Capstones\n", self.count.p2_cap, self.count.max_cap)
+
     }
 }
 
 impl Board {
     pub fn new(board_size: usize) -> Board {
         assert!(board_size >= 4 && board_size <= 8);
-        Board { grid: vec![vec![Square::new(); board_size]; board_size] }
+        Board {
+            grid: vec![vec![Square::new(); board_size]; board_size],
+            count: PieceCount::new(board_size),
+        }
     }
 
     pub fn at(&self, point: &Point) -> Result<&Square, &str> {
@@ -134,34 +202,17 @@ impl Board {
         !self.squares().iter().any(|sq| sq.pieces.is_empty())
     }
 
-
-    // Number of stones which can be played on this sized board
-    pub fn piece_limits(&self) -> (u32, u32) {
-        // Max number of each stones that can be had
-        // Indexed with board size - 4
-        let flat_counts = [15, 20, 30, 40, 50];
-        let flats = flat_counts[self.size() - 4];
-        let capstone_counts = [0, 1, 1, 2, 2];
-        let caps = capstone_counts[self.size() - 4];
-        (flats, caps)
+    pub fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
+        {
+            let square = try!(self.at_mut(point));
+            try!(square.place_piece(piece));
+        }
+        self.count.add(&piece);
+        Ok(())
     }
 
     pub fn used_up(&self, piece: &Piece) -> bool {
-        let (p1_flat, p1_cap, p2_flat, p2_cap) = self.piece_counts();
-        let (flats, caps) = self.piece_limits();
-        if piece.owner == Player::One {
-            if piece.stone == piece::Stone::Capstone {
-                return p1_cap >= caps
-            } else {
-                return p1_flat >= flats
-            }
-        } else {
-            if piece.stone == piece::Stone::Capstone {
-                return p2_cap >= caps
-            } else {
-                return p2_flat >= flats
-            }
-        }
+        self.count.used_up(piece)
     }
 
     pub fn follow(&self,
@@ -184,31 +235,4 @@ impl Board {
         }
         connected
     }
-
-
-    /// Counts total pieces of each type used
-    pub fn piece_counts(&self) -> (u32, u32, u32, u32) {
-        let mut p1_flat = 0;
-        let mut p1_cap = 0;
-        let mut p2_flat = 0;
-        let mut p2_cap = 0;
-
-        for piece in self.squares().iter().flat_map(|sq| sq.pieces.iter()) {
-            if piece.owner == Player::One {
-                if piece.stone == piece::Stone::Capstone {
-                    p1_cap += 1;
-                } else {
-                    p1_flat += 1;
-                }
-            } else {
-                if piece.stone == piece::Stone::Capstone {
-                    p2_cap += 1;
-                } else {
-                    p2_flat += 1;
-                }
-            }
-        }
-        (p1_flat, p1_cap, p2_flat, p2_cap)
-    }
-
 }
