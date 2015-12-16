@@ -12,6 +12,7 @@ pub use turn::Turn;
 pub use turn::Direction;
 pub use board::Board;
 pub use piece::Player;
+pub use piece::Stone;
 pub use piece::Piece;
 pub use point::Point;
 
@@ -62,20 +63,23 @@ impl Game {
         self.board.to_string()
     }
 
-    pub fn play(&mut self, turn: &str, player: Player) -> Result<Option<Player>, String> {
+    pub fn play(&mut self, turn: &str, player: Player, owner: Option<Player>) -> Result<Option<Player>, String> {
         if self.next != player {
             return Err("Not your turn".into());
         }
         match turn.parse::<Turn>() {
-            Ok(t) => self.play_parsed(t),
+            Ok(t) => self.play_parsed(t, owner),
             Err(_) => Err("Invalid move".into()),
         }
     }
 
-    pub fn play_parsed(&mut self, turn: Turn) -> Result<Option<Player>, String> {
+    pub fn play_parsed(&mut self, turn: Turn, owner: Option<Player>) -> Result<Option<Player>, String> {
         match turn {
-            Turn::Place { ref point, ref piece } => {
-                try!(self.place(point, piece));
+            Turn::Place { ref point, ref stone } => {
+                match owner {
+                    Some(player) => try!(self.place(point, stone, &player)),
+                    None => return Err("Must supply owner to place piece".into()),
+                }
             }
             Turn::Slide { ref num_pieces, ref point, ref direction, ref drops } => {
                 try!(self.slide(num_pieces, point, direction, drops));
@@ -86,21 +90,22 @@ impl Game {
         Ok(self.check_winner())
     }
 
-    fn place(&mut self, point: &Point, piece: &Piece) -> Result<(), String> {
+    fn place(&mut self, point: &Point, stone: &Stone, owner: &Player) -> Result<(), String> {
         if self.history.len() >= 2 {
-            if self.next != piece.owner {
+            if self.next != *owner {
                 return Err("Player must play own piece".into())
             }
-        } else if self.next == piece.owner {
+        } else if self.next == *owner {
             return Err("Play opposite piece on first turn".into())
-        } else if piece.stone != piece::Stone::Flat {
+        } else if *stone != piece::Stone::Flat {
             return Err("Play flat piece on first turn".into())
         }
-        if self.board.used_up(piece) {
+        let piece = Piece { stone: *stone, owner: *owner };
+        if self.board.used_up(&piece) {
             return Err("Player has used all of that type of stone".into())
         }
         let square = try!(self.board.at_mut(point));
-        try!(square.place_piece(*piece));
+        try!(square.place_piece(piece));
         Ok(())
     }
 

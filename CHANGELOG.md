@@ -4,7 +4,11 @@ This project attempts to follow semantic versioning.
 
 ### UNRELEASED
 
+### 0.5.0
+
 - [changed] allow full shortening of basic slides, ala "a1+"
+- [changed] when placing a piece, conform to PTN
+- [added] full PTN compliance
 
 ### 0.4.0
 

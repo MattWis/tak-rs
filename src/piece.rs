@@ -18,6 +18,25 @@ impl fmt::Display for Stone {
     }
 }
 
+impl FromStr for Stone {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let stone_type = s.chars().nth(0).unwrap_or('0');
+        if "FSC".contains(stone_type) {
+            match stone_type {
+                'F' => Ok(Stone::Flat),
+                'S' => Ok(Stone::Standing),
+                'C' => Ok(Stone::Capstone),
+                _ => Err(()),
+            }
+        } else {
+            Err(())
+        }
+    }
+
+}
+
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Player {
@@ -69,37 +88,5 @@ impl Piece {
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}", self.stone, self.owner)
-    }
-}
-
-impl FromStr for Piece {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 2 {
-            return Err(());
-        }
-        let mut chars = s.chars();
-        let stone_type = chars.nth(0).unwrap_or('0');
-        if "FSC".contains(stone_type) {
-            let stone = match stone_type {
-                'F' => Stone::Flat,
-                'S' => Stone::Standing,
-                'C' => Stone::Capstone,
-                _ => return Err(()),
-            };
-            let player = match chars.next() {
-                Some('1') => Player::One,
-                Some('2') => Player::Two,
-                _ => return Err(()),
-            };
-
-            Ok(Piece {
-                stone: stone,
-                owner: player,
-            })
-        } else {
-            Err(())
-        }
     }
 }

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use point::Point;
-use piece::Piece;
+use piece::Stone;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Direction {
@@ -83,7 +83,7 @@ impl FromStr for Direction {
 pub enum Turn {
     Place {
         point: Point,
-        piece: Piece,
+        stone: Stone,
     },
     Slide {
         num_pieces: usize,
@@ -98,6 +98,7 @@ pub type TurnErr = ();
 impl FromStr for Turn {
     type Err = TurnErr;
     fn from_str(s: &str) -> Result<Self, TurnErr> {
+        // Used for Turn::Slide
         fn get_drops(s: &str) -> Result<Vec<usize>, TurnErr> {
             let drops = s.chars().map(|c| {
                                    match c.to_digit(10) {
@@ -115,21 +116,27 @@ impl FromStr for Turn {
             Ok(drops)
         }
 
-        let places = "abcdefgh";
-        let slides = "012345678";
-
-        let first = s.chars().nth(0).unwrap();
-        if places.chars().position(|x| x == first).is_some() {
-            // My placement method - See README
-            let point = try!(s[0..2].parse::<Point>());
-            if let Ok(piece) = s[2..].parse::<Piece>() {
-                Ok(Turn::Place {
-                    point: point,
-                    piece: piece,
-                })
-            } else {
+        if let Ok(stone) = s[0..1].parse::<Stone>() {
+            // Placement - PTN notation Full
+            let point = try!(s[1..].parse::<Point>());
+            Ok(Turn::Place {
+                point: point,
+                stone: stone,
+            })
+        } else if let Ok(pieces) = s[0..1].parse::<usize>() {
+            // Slide - PTN Notation Full
+            let point = try!(s[1..3].parse::<Point>());
+            let direction = try!(s[3..4].parse::<Direction>());
+            let drops = try!(get_drops(&s[4..]));
+            Ok(Turn::Slide {
+                num_pieces: pieces,
+                point: point,
+                direction: direction,
+                drops: drops,
+            })
+        } else if let Ok(point) = s[0..2].parse::<Point>() {
+            if let Ok(direction) = s[2..].parse::<Direction>() {
                 // Slide - abbreviated
-                let direction = try!(s[2..3].parse::<Direction>());
                 let drops = try!(get_drops(&s[3..]));
                 if drops.len() > 0 {
                    Ok(Turn::Slide {
@@ -146,18 +153,13 @@ impl FromStr for Turn {
                        drops: vec![1],
                    })
                 }
+            } else {
+                // Place - abbreviated
+                Ok(Turn::Place {
+                    point: point,
+                    stone: Stone::Flat,
+                })
             }
-        } else if let Some(pieces) = slides.chars().position(|x| x == first) {
-            // Slide - PTN Notation Full
-            let point = try!(s[1..3].parse::<Point>());
-            let direction = try!(s[3..4].parse::<Direction>());
-            let drops = try!(get_drops(&s[4..]));
-            Ok(Turn::Slide {
-                num_pieces: pieces,
-                point: point,
-                direction: direction,
-                drops: drops,
-            })
         } else {
             Err(())
         }
