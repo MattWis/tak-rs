@@ -135,7 +135,7 @@ impl Game {
                 None => return Err("".into()),
             };
             let square = try!(self.board.at_mut(&p));
-            for _ in (0..*count) {
+            for _ in 0..*count {
                 match pieces.next() {
                     Some(piece) => try!(square.add_piece(*piece)),
                     None => return Err("Used all pieces".into()),
