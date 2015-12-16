@@ -4,6 +4,8 @@ This project attempts to follow semantic versioning.
 
 ### UNRELEASED
 
+- [changed] allow full shortening of basic slides, ala "a1+"
+
 ### 0.4.0
 
 - [changed] when making a sliding turn, string should conform to PTN

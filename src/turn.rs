@@ -93,11 +93,12 @@ pub enum Turn {
     },
 }
 
-impl FromStr for Turn {
-    type Err = ();
+pub type TurnErr = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        fn get_drops(s: &str) -> Option<Vec<usize>> {
+impl FromStr for Turn {
+    type Err = TurnErr;
+    fn from_str(s: &str) -> Result<Self, TurnErr> {
+        fn get_drops(s: &str) -> Result<Vec<usize>, TurnErr> {
             let drops = s.chars().map(|c| {
                                    match c.to_digit(10) {
                                        Some(x) => x as usize,
@@ -106,12 +107,12 @@ impl FromStr for Turn {
                                })
                                .collect::<Vec<_>>();
             if drops.iter().any(|x| *x > 99) {
-                return None;
+                return Err(());
             }
             if drops.iter().any(|x| *x < 1) {
-                return None;
+                return Err(());
             }
-            Some(drops)
+            Ok(drops)
         }
 
         let places = "abcdefgh";
@@ -121,7 +122,7 @@ impl FromStr for Turn {
         if places.chars().position(|x| x == first).is_some() {
             // My placement method - See README
             let point = try!(s[0..2].parse::<Point>());
-            if let Ok(piece) = s[2..4].parse::<Piece>() {
+            if let Ok(piece) = s[2..].parse::<Piece>() {
                 Ok(Turn::Place {
                     point: point,
                     piece: piece,
@@ -129,29 +130,34 @@ impl FromStr for Turn {
             } else {
                 // Slide - abbreviated
                 let direction = try!(s[2..3].parse::<Direction>());
-                match get_drops(&s[3..]) {
-                    Some(drops) => Ok(Turn::Slide {
-                                          num_pieces: 1,
-                                          point: point,
-                                          direction: direction,
-                                          drops: drops,
-                                      }),
-                    None => Err(()),
+                let drops = try!(get_drops(&s[3..]));
+                if drops.len() > 0 {
+                   Ok(Turn::Slide {
+                       num_pieces: 1,
+                       point: point,
+                       direction: direction,
+                       drops: drops,
+                   })
+                } else {
+                   Ok(Turn::Slide {
+                       num_pieces: 1,
+                       point: point,
+                       direction: direction,
+                       drops: vec![1],
+                   })
                 }
             }
         } else if let Some(pieces) = slides.chars().position(|x| x == first) {
             // Slide - PTN Notation Full
             let point = try!(s[1..3].parse::<Point>());
             let direction = try!(s[3..4].parse::<Direction>());
-            match get_drops(&s[4..]) {
-                Some(drops) => Ok(Turn::Slide {
-                                      num_pieces: pieces,
-                                      point: point,
-                                      direction: direction,
-                                      drops: drops,
-                                  }),
-                None => Err(()),
-            }
+            let drops = try!(get_drops(&s[4..]));
+            Ok(Turn::Slide {
+                num_pieces: pieces,
+                point: point,
+                direction: direction,
+                drops: drops,
+            })
         } else {
             Err(())
         }
