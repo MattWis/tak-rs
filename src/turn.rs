@@ -49,7 +49,7 @@ impl Direction {
         }
     }
 
-    fn all() -> Vec<Direction> {
+    pub fn all() -> Vec<Direction> {
         vec![Direction::Right, Direction::Left, Direction::Down, Direction::Up]
     }
 
