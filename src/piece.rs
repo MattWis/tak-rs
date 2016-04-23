@@ -89,6 +89,10 @@ impl Piece {
         }
         Ok(())
     }
+
+    pub fn to3bits(&self) -> u8 {
+        return (self.owner as u8) << 2 + (self.stone as u8)
+    }
 }
 
 impl fmt::Display for Piece {

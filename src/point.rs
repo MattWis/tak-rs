@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-
+// TODO: Optimize to a single u8
+// How to handle board sizes? (Maybe 2 u8s)
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, RustcDecodable, RustcEncodable)]
 pub struct Point {
     pub x: usize,

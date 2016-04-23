@@ -253,8 +253,6 @@ impl Board for NaiveBoard {
     }
 }
 
-//enum
-
 impl FromStr for NaiveBoard {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
