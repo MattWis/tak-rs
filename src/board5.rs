@@ -93,18 +93,48 @@ impl Board for Board5 {
         let mut top = Piece::from_u8(top_bits).unwrap();
         try!(piece.move_onto(&mut top));
 
-        if spot.bits(1..0) == 0 {
-            let mut temp = spot.bits(11..2) >> 2;
-            if top.owner() == Player::One {
-                temp = temp | 0x400;
-            } else {
-                temp = temp | 0x800;
-            }
-            self.grid[point.x][point.y] = temp | ((piece as u16) << 13);
+        let mut lowest = spot.bits(1..0);
+        let mut temp = spot.bits(11..2) >> 2;
+        if top.owner() == Player::One {
+            temp = temp | 0x400;
+        } else {
+            temp = temp | 0x800;
+        }
+        self.grid[point.x][point.y] = temp | ((piece as u16) << 13);
+        if lowest == 0 {
             Ok(())
         } else {
+            // Need to add the bumped piece to an existing continuation
+            let my_spot = 0 as u16;
+            for i in 0..7 {
+                let cont = self.continuations[i];
+                if cont.bits(15..11) == (point.x * 5 + point.y) as u16 {
+                    let mut temp: u16 = cont & 0xF800; // Keep location
+                    temp |= cont.bits(9..2); // Shift everything thats there
+                    temp |= lowest << 9; // Add in the bumped piece
+                    self.continuations[i] = temp;
+
+                    lowest = cont & 3; // We may have to do this again...
+                    if lowest == 0 {
+                        return Ok(());
+                    }
+                }
+            }
+
+            // If we haven't returned yet, we need to start a new continuation
+            for i in 0..7 {
+                let cont = self.continuations[i];
+                if cont.bits(15..11) == 0 {
+                    // It's unclaimed - let's claim it by setting the location
+                    let mut temp: u16 = ((point.x * 5 + point.y) as u16) << 11;
+                    temp |= lowest << 9; // Add in the bumped piece
+                    self.continuations[i] = temp;
+                    return Ok(());
+                }
+            }
+
             // Need to figure out continuations
-            Err("Not implemented".into())
+            Err("No available continuations. Did you play too many pieces?".into())
         }
     }
 
