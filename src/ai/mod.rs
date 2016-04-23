@@ -23,7 +23,7 @@ impl Ai {
 
     pub fn next_move(&self, turn: usize, board: &NaiveBoard) -> Turn {
         if turn < 2 {
-            if board.at(&Point::new(0, 0)).unwrap().pieces.is_empty() {
+            if board.at(&Point::new(0, 0)).unwrap().count() == 0 {
                 Place { point: Point::new(0, 0), stone: Stone::Flat }
             } else {
                 Place { point: Point::new(0, board.size() - 1), stone: Stone::Flat }
@@ -39,7 +39,7 @@ impl Ai {
             for y in 0..board.size() {
                 let point = Point::new(x, y);
                 let square = board.at(&point).unwrap();
-                if square.pieces.is_empty() {
+                if square.clone().count() == 0 {
                     self.possible_moves_place(board, point, &mut moves);
                 } else if square.mover() == Some(self.player) {
                     self.possible_moves_slide(board, point, &mut moves);
@@ -60,12 +60,12 @@ impl Ai {
     }
 
     fn possible_moves_slide(&self, board: &NaiveBoard, point: Point, moves: &mut Vec<Turn>) {
-        let pile_height = board.at(&point).unwrap().pieces.len();
+        let pile_height = board.at(&point).unwrap().count();
         for dir in Direction::all() {
             let mut clear = 0;
             while let Some(point) = dir.adjust(&point, clear + 1, board.size()) {
                 // Deal with blocking in and capstones flattening
-                if let Some(piece) = board.at(&point).unwrap().pieces.last() {
+                if let Some(piece) = board.at(&point).unwrap().last() {
                     if piece.stone() != Stone::Flat {
                         break;
                     }

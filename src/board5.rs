@@ -7,10 +7,42 @@ use enum_primitive::FromPrimitive;
 
 use board::Board;
 use board::Square;
+use board::PieceIter;
 use piece::Piece;
 use piece::Player;
+use piece::Stone;
 use piece;
 use point::Point;
+
+pub fn advance_piece_iterator(spot: &mut u16, extra: &mut [u16; 7])
+                              -> Option<Piece> {
+    for i in 7..0 {
+        if extra[i].bits(15..11) != 0 {
+            let piece = Piece::from_u8((((extra[i] & 1) << 2) | 1) as u8).unwrap();
+            extra[i] = (extra[i] & 0xF800) | extra[i].bits(9..2);
+            // We've shifted out everything from this continuation
+            if extra[i] & 3 == 0 {
+                extra[i] = 0;
+            }
+            return Some(piece);
+        }
+    }
+    // Now the standard shift-out
+    let temp = *spot;
+    if temp & 3 != 0 {
+        // Lower pieces
+        let piece = Piece::from_u8((((temp & 1) << 2) | 1) as u8).unwrap();
+        *spot = (temp & 0xF800) | temp.bits(11..2);
+        Some(piece)
+    } else if *spot != 0 {
+        // Top piece
+        let piece = Piece::from_u8(temp.bits(15..13) as u8).unwrap();
+        *spot = 0;
+        Some(piece)
+    } else {
+        None
+    }
+}
 
 //TODO: Copy? (s needs to be removed first)
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
@@ -42,16 +74,60 @@ impl Board for Board5 {
     }
 
 
-    fn at(&self, point: &Point) -> Result<&Square, &str> {
-        Err("Not implemented")
+    fn at(&self, point: &Point) -> Result<PieceIter, &str> {
+        let mut extra = self.continuations;
+        let location = ((point.x * 5 + point.y) as u16) << 11;
+        for i in 0..7 {
+            if extra[i] & location != location {
+                extra[i] = 0;
+            } else {
+                while extra[i] & 3 == 0 {
+                    extra[i] = (extra[i] & location) | extra[i].bits(9..2);
+                }
+            }
+        }
+
+        let mut spot = self.grid[point.x][point.y];
+        if spot & 0x0FFF != 0 {
+            while spot & 3 == 0 {
+                spot = (spot & 0xE000) | spot.bits(11..2);
+            }
+        }
+
+        Ok(PieceIter::Board5Iter {
+            spot: spot,
+            extra: extra,
+        })
     }
 
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
         Err("Not implemented")
     }
 
-    fn at_reset(&mut self, point: &Point) -> Result<Square, &str> {
-        Err("Not implemented")
+    fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str> {
+        let mut extra = self.continuations;
+        let location = ((point.x * 5 + point.y) as u16) << 11;
+        for i in 0..7 {
+            if extra[i] & location != location {
+                extra[i] = 0;
+            } else {
+                self.continuations[i] = 0;
+                while extra[i] & 3 == 0 {
+                    extra[i] = (extra[i] & location) | extra[i].bits(9..2);
+                }
+            }
+        }
+
+        let mut spot = self.grid[point.x][point.y];
+        self.grid[point.x][point.y] = 0;
+        while spot & 3 == 0 {
+            spot = (spot & 0xE000) | spot.bits(11..2);
+        }
+
+        Ok(PieceIter::Board5Iter {
+            spot: spot,
+            extra: extra,
+        })
     }
 
     fn size(&self) -> usize {
@@ -94,7 +170,7 @@ impl Board for Board5 {
         try!(piece.move_onto(&mut top));
 
         let mut lowest = spot.bits(1..0);
-        let mut temp = spot.bits(11..2) >> 2;
+        let mut temp = spot.bits(11..2);
         if top.owner() == Player::One {
             temp = temp | 0x400;
         } else {
@@ -153,6 +229,77 @@ impl Board for Board5 {
 impl FromStr for Board5 {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Board5::new(5))
+        // Pay a runtime cost for String slices to guarantee no panics
+        fn slice(s: &str, start: usize, end: usize) -> String {
+            s.chars().skip(start).take(end - start).collect::<String>()
+        }
+
+        // Parse the pieces of a non-empty square
+        fn parse_square(s: &str, b: &mut Board5, point: &Point) -> Result<(), String> {
+            let mut i = 0;
+            while i < s.chars().count() {
+                let c = s.chars().nth(i);
+                let stone = s.chars().nth(i+1);
+                let piece = if c == Some('1') {
+                    if stone == Some('S') {
+                        i += 1;
+                        Piece::new(Stone::Standing, Player::One)
+                    } else if stone == Some('C') {
+                        i += 1;
+                        Piece::new(Stone::Capstone, Player::One)
+                    } else {
+                        Piece::new(Stone::Flat, Player::One)
+                    }
+                } else if c == Some('2') {
+                    if stone == Some('S') {
+                        i += 1;
+                        Piece::new(Stone::Standing, Player::Two)
+                    } else if stone == Some('C') {
+                        i += 1;
+                        Piece::new(Stone::Capstone, Player::Two)
+                    } else {
+                        Piece::new(Stone::Flat, Player::Two)
+                    }
+                } else {
+                    return Err("Out of order stuff".into())
+                };
+                try!(b.add_piece(point, piece));
+                i += 1;
+            }
+            Ok(())
+        }
+
+        fn parse_row(s: &str, b: &mut Board5, y: usize) -> Result<(), String> {
+            println!("{}", s);
+            let mut index = 0;
+            for str in s.split(",") {
+                let mut entry = if slice(str, 0, 1) == "x" {
+                    match slice(str, 1, 2).parse::<usize>() {
+                        Ok(num) => index += num,
+                        Err(_) => index += 1,
+                    }
+                } else if slice(str, 0, 1) == "1" || slice(str, 0, 1) == "2" {
+                    let sq = try!(parse_square(str, b, &Point::new(index, y)));
+                } else {
+                    return Err("Empty cell should be marked with 'x'".into())
+                };
+            }
+            Ok(())
+        }
+
+        let size = s.chars().filter(|c| *c == '/').count() + 1;
+        if size != 5 {
+            return Err(());
+        }
+        let mut board = Board5::new(size);
+
+        let iter = s.split("/");
+        for (i, str) in iter.enumerate() {
+            match parse_row(&str, &mut board, 4 - i) {
+                Ok(x) => x,
+                Err(_) => return Err(()),
+            };
+        }
+        Ok(board)
     }
 }

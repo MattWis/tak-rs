@@ -5,6 +5,7 @@ use std::fmt;
 use ai::Ai;
 use turn::Turn;
 use turn::Direction;
+use board::PieceIter;
 use board::NaiveBoard;
 use board::Board;
 use piece::Player;
@@ -113,21 +114,21 @@ impl Game {
             return Err("Number of pieces claimed to move is diffent from number of pieces moved".into());
         }
 
-        let cell = try!(self.board.at_reset(point));
+        let mut pieces = try!(self.board.at_reset(point));
+        let len = pieces.clone().count();
 
-        if *num_pieces > cell.len() {
+        if *num_pieces > len {
             return Err("Trying to move more pieces than exist".into());
         }
-        if cell.mover() != Some(self.next) {
+        if pieces.mover() != Some(self.next) {
             return Err("Must have control to move pile".into())
         }
 
         let size = self.size();
         let points = (0..).map(|x: usize| dir.adjust(point, x, size));
 
-        let first_drop = [cell.len() - *num_pieces];
+        let first_drop = [len - *num_pieces];
         let to_drop = first_drop.iter().chain(drops);
-        let mut pieces = cell.pieces.iter();
 
         for (point, count) in points.zip(to_drop) {
             let p = match point {
@@ -136,7 +137,7 @@ impl Game {
             };
             for _ in 0..*count {
                 match pieces.next() {
-                    Some(piece) => try!(self.board.add_piece(&p, *piece)),
+                    Some(piece) => try!(self.board.add_piece(&p, piece)),
                     None => return Err("Used all pieces".into()),
                 }
             }

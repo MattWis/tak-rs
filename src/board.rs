@@ -9,6 +9,7 @@ use piece::Stone;
 use piece::Piece;
 use piece::Player;
 use piece;
+use board5;
 use point::Point;
 use turn::Direction;
 
@@ -136,6 +137,45 @@ impl PieceCount {
     }
 }
 
+#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
+pub enum PieceIter {
+    NaiveBoardIter {
+        square: Square,
+        index: usize,
+    },
+    Board5Iter {
+        spot: u16,
+        extra: [u16; 7],
+    }
+}
+
+impl Iterator for PieceIter {
+    type Item = Piece;
+
+    fn next(&mut self) -> Option<Piece> {
+        match *self {
+            PieceIter::NaiveBoardIter { ref square, ref mut index } => {
+                if *index >= square.pieces.len() {
+                    return None;
+                }
+                let s = square.pieces[*index];
+                *index = *index + 1;
+                Some(s)
+            }
+            PieceIter::Board5Iter { ref mut spot, ref mut extra } => {
+                board5::advance_piece_iterator(spot, extra)
+            }
+        }
+    }
+}
+
+impl PieceIter {
+    pub fn mover(&self) -> Option<Player> {
+        let dup = self.clone();
+        dup.last().map(|piece| piece.owner())
+    }
+}
+
 pub trait Board {
     fn new(usize) -> Self;
     fn size(&self) -> usize;
@@ -149,8 +189,8 @@ pub trait Board {
               -> BTreeSet<Point>;
 
     // These 2 aren't necessarily efficient
-    fn at(&self, point: &Point) -> Result<&Square, &str>;
-    fn at_reset(&mut self, point: &Point) -> Result<Square, &str>;
+    fn at(&self, point: &Point) -> Result<PieceIter, &str>;
+    fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str>;
 
     // I want these to die
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
@@ -193,6 +233,14 @@ impl fmt::Display for NaiveBoard {
     }
 }
 
+impl NaiveBoard {
+    // Internal use only
+    fn at_int(&self, point: &Point) -> Result<&Square, &str> {
+        let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
+        row.get(point.x).ok_or("Invalid point")
+    }
+}
+
 impl Board for NaiveBoard {
     fn new(board_size: usize) -> NaiveBoard {
         assert!(board_size >= 4 && board_size <= 8);
@@ -202,9 +250,13 @@ impl Board for NaiveBoard {
         }
     }
 
-    fn at(&self, point: &Point) -> Result<&Square, &str> {
+    fn at(&self, point: &Point) -> Result<PieceIter, &str> {
         let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
-        row.get(point.x).ok_or("Invalid point")
+        let cell = try!(row.get(point.x).ok_or("Invalid point"));
+        Ok(PieceIter::NaiveBoardIter {
+            square: cell.clone(),
+            index: 0,
+        })
     }
 
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
@@ -212,10 +264,13 @@ impl Board for NaiveBoard {
         row.get_mut(point.x).ok_or("Invalid point")
     }
 
-    fn at_reset(&mut self, point: &Point) -> Result<Square, &str> {
+    fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str> {
         let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
         let square = try!(row.get_mut(point.x).ok_or("Invalid point"));
-        Ok(mem::replace(square, Square::new()))
+        Ok(PieceIter::NaiveBoardIter {
+            square: mem::replace(square, Square::new()),
+            index: 0,
+        })
     }
 
     fn size(&self) -> usize {
@@ -261,7 +316,7 @@ impl Board for NaiveBoard {
 
         while let Some(start) = starts.pop_front() {
             visited.insert(start);
-            if self.at(&start).ok().and_then(|p| p.owner()) == Some(player) {
+            if self.at_int(&start).ok().and_then(|p| p.owner()) == Some(player) {
                 connected.insert(start);
                 for point in Direction::neighbors(&start, self.size()) {
                     if !visited.contains(&point) {
