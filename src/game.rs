@@ -96,7 +96,7 @@ impl Game {
         } else if *stone != Stone::Flat {
             return Err("Play flat piece on first turn".into())
         }
-        let piece = Piece { stone: *stone, owner: *owner };
+        let piece = Piece::new(*stone, *owner);
         if self.board.used_up(&piece) {
             return Err("Player has used all of that type of stone".into())
         }

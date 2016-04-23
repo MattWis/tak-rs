@@ -66,7 +66,7 @@ impl Ai {
             while let Some(point) = dir.adjust(&point, clear + 1, board.size()) {
                 // Deal with blocking in and capstones flattening
                 if let Some(piece) = board.at(&point).unwrap().pieces.last() {
-                    if piece.stone != Stone::Flat {
+                    if piece.stone() != Stone::Flat {
                         break;
                     }
                 }

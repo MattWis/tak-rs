@@ -55,24 +55,24 @@ impl Square {
 
     // Used for moving stones eligibility
     pub fn mover(&self) -> Option<Player> {
-        self.pieces.last().map(|piece| piece.owner)
+        self.pieces.last().map(|piece| piece.owner())
     }
 
     // Used for road wins
     pub fn owner(&self) -> Option<Player> {
         self.pieces.last().and_then(|piece|
-            if piece.stone == piece::Stone::Standing {
+            if piece.stone() == Stone::Standing {
                 None
             } else {
-                Some(piece.owner)
+                Some(piece.owner())
             })
     }
 
     // Used for winning the flats
     pub fn scorer(&self) -> Option<Player> {
         self.pieces.last().and_then(|piece|
-            if piece.stone == piece::Stone::Flat {
-                Some(piece.owner)
+            if piece.stone() == Stone::Flat {
+                Some(piece.owner())
             } else {
                 None
             })
@@ -104,14 +104,14 @@ impl PieceCount {
     }
 
     fn add(&mut self, piece: &Piece) {
-        if piece.owner == Player::One {
-            if piece.stone == Stone::Capstone {
+        if piece.owner() == Player::One {
+            if piece.stone() == Stone::Capstone {
                 self.p1_cap += 1;
             } else {
                 self.p1_flat += 1;
             }
         } else {
-            if piece.stone == Stone::Capstone {
+            if piece.stone() == Stone::Capstone {
                 self.p2_cap += 1;
             } else {
                 self.p2_flat += 1;
@@ -120,14 +120,14 @@ impl PieceCount {
     }
 
     fn used_up(&self, piece: &Piece) -> bool {
-        if piece.owner == Player::One {
-            if piece.stone == Stone::Capstone {
+        if piece.owner() == Player::One {
+            if piece.stone() == Stone::Capstone {
                 return self.p1_cap >= self.max_cap
             } else {
                 return self.p1_flat >= self.max_flat
             }
         } else {
-            if piece.stone == Stone::Capstone {
+            if piece.stone() == Stone::Capstone {
                 return self.p2_cap >= self.max_cap
             } else {
                 return self.p2_flat >= self.max_flat

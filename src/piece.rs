@@ -66,46 +66,49 @@ impl fmt::Display for Player {
     }
 }
 
+enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
-pub struct Piece {
-    pub stone: Stone,
-    pub owner: Player,
+pub enum Piece {
+    TwoFlat = 1,
+    TwoStanding = 2,
+    TwoCapstone = 3,
+    OneFlat = 5,
+    OneStanding = 6,
+    OneCapstone = 7,
+}
 }
 
 impl Piece {
     pub fn new(stone: Stone, owner: Player) -> Piece {
-        Piece { stone: stone, owner: owner }
+        Piece::from_u8(((owner as u8) << 2) | (stone as u8)).unwrap()
+    }
+
+    pub fn owner(&self) -> Player {
+        Player::from_u8((*self as u8) >> 2).unwrap()
+    }
+
+    pub fn stone(&self) -> Stone {
+        Stone::from_u8((*self as u8 & 0x3)).unwrap()
     }
 
     // Flatten a standing stone if a capstone moves onto it
     // Cannot move onto capstone or standing stone otherwise
     pub fn move_onto(&self, base: &mut Piece) -> Result<(), &str> {
-        if base.stone == Stone::Capstone {
+        if base.stone() == Stone::Capstone {
             return Err("Cannot move onto Capstone");
         }
-        if base.stone == Stone::Standing && self.stone != Stone::Capstone {
+        if base.stone() == Stone::Standing && self.stone() != Stone::Capstone {
             return Err("Cannot move normal stone onto standing stone");
         }
-        if base.stone == Stone::Standing && self.stone == Stone::Capstone {
-            base.stone = Stone::Flat;
+        if base.stone() == Stone::Standing && self.stone() == Stone::Capstone {
+            *base = Piece::new(Stone::Flat, base.owner());
         }
         Ok(())
-    }
-
-    pub fn to3bits(&self) -> u8 {
-        ((self.owner as u8) << 2) | (self.stone as u8)
-    }
-
-    pub fn from3bits(p: u8) -> Piece {
-        Piece {
-            stone: Stone::from_u8(p.bits(1..0)).unwrap(),
-            owner: if p.bit(2) { Player::One } else { Player::Two },
-        }
     }
 }
 
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.stone, self.owner)
+        write!(f, "{}{}", self.stone(), self.owner())
     }
 }

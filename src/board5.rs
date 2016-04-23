@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::fmt;
 use twiddle::Twiddle;
+use enum_primitive::FromPrimitive;
 
 use board::Board;
 use board::Square;
@@ -75,7 +76,7 @@ impl Board for Board5 {
 
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
         if top_piece_bits(self.grid[point.x][point.y]) == 0 {
-            self.grid[point.x][point.y] = (piece.to3bits() as u16) << 13;
+            self.grid[point.x][point.y] = (piece as u16) << 13;
             Ok(())
         } else {
             return Err("Cannot place stone on top of existing stone.".into());
@@ -84,23 +85,22 @@ impl Board for Board5 {
 
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
         let spot = self.grid[point.x][point.y];
-        let piece_bits = piece.to3bits() as u16;
         let top_bits = top_piece_bits(spot);
         if top_bits == 0 {
-            self.grid[point.x][point.y] = piece_bits << 13;
+            self.grid[point.x][point.y] = (piece as u16) << 13;
             return Ok(());
         }
-        let mut top = Piece::from3bits(top_bits);
+        let mut top = Piece::from_u8(top_bits).unwrap();
         try!(piece.move_onto(&mut top));
 
         if spot.bits(1..0) == 0 {
             let mut temp = spot.bits(11..2) >> 2;
-            if top.owner == Player::One {
+            if top.owner() == Player::One {
                 temp = temp | 0x400;
             } else {
                 temp = temp | 0x800;
             }
-            self.grid[point.x][point.y] = temp | (piece_bits << 13);
+            self.grid[point.x][point.y] = temp | ((piece as u16) << 13);
             Ok(())
         } else {
             // Need to figure out continuations
