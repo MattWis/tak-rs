@@ -1,11 +1,13 @@
 use std::fmt;
 use std::str::FromStr;
 
+enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Stone {
-    Flat,
-    Standing,
-    Capstone,
+    Flat = 1,
+    Standing = 2,
+    Capstone = 3,
+}
 }
 
 impl fmt::Display for Stone {
@@ -34,14 +36,14 @@ impl FromStr for Stone {
             Err(())
         }
     }
-
 }
 
-
+enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
 pub enum Player {
-    One,
-    Two,
+    One = 1,
+    Two = 0,
+}
 }
 
 impl Player {

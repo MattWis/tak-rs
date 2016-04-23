@@ -10,3 +10,4 @@ description = "Implementation of Tak (from the Kingkiller Chronicles)"
 
 [dependencies]
 rustc-serialize = "0.3"
+enum_primitive = "*"

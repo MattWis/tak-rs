@@ -1,4 +1,6 @@
 extern crate rustc_serialize;
+#[macro_use]
+extern crate enum_primitive;
 
 pub mod piece;
 pub mod point;
