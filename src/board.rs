@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::iter;
 use std::fmt;
+use std::mem;
 
 use piece::Stone;
 use piece::Piece;
@@ -139,10 +140,12 @@ pub trait Board {
     fn new(usize) -> Self;
     fn at(&self, point: &Point) -> Result<&Square, &str>;
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
+    fn at_reset(&mut self, point: &Point) -> Result<Square, &str>;
     fn size(&self) -> usize;
     fn squares(&self) -> Vec<&Square>;
     fn full(&self) -> bool;
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
+    fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
     fn used_up(&self, piece: &Piece) -> bool;
     fn follow(&self,
               starts: &mut VecDeque<Point>,
@@ -205,6 +208,12 @@ impl Board for NaiveBoard {
         row.get_mut(point.x).ok_or("Invalid point")
     }
 
+    fn at_reset(&mut self, point: &Point) -> Result<Square, &str> {
+        let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
+        let square = try!(row.get_mut(point.x).ok_or("Invalid point"));
+        Ok(mem::replace(square, Square::new()))
+    }
+
     fn size(&self) -> usize {
         self.grid.len()
     }
@@ -224,6 +233,14 @@ impl Board for NaiveBoard {
             try!(square.place_piece(piece));
         }
         self.count.add(&piece);
+        Ok(())
+    }
+
+    fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
+        {
+            let square = try!(self.at_mut(point));
+            try!(square.add_piece(piece));
+        }
         Ok(())
     }
 

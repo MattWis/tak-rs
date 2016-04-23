@@ -1,14 +1,12 @@
 extern crate rustc_serialize;
 use std::collections::VecDeque;
 use std::fmt;
-use std::mem;
 
 use ai::Ai;
 use turn::Turn;
 use turn::Direction;
 use board::NaiveBoard;
 use board::Board;
-use board::Square;
 use piece::Player;
 use piece::Stone;
 use piece::Piece;
@@ -106,18 +104,6 @@ impl Game {
     }
 
     fn slide(&mut self, num_pieces: &usize, point: &Point, dir: &Direction, drops: &Vec<usize>) -> Result<(), String> {
-        let cell = {
-            let square = try!(self.board.at_mut(point));
-            if *num_pieces > square.len() {
-                return Err("Trying to move more pieces than exist".into());
-            }
-            if square.mover() != Some(self.next) {
-                return Err("Must have control to move pile".into())
-            }
-
-            mem::replace(square, Square::new())
-        };
-
         // Enforce carry limit
         if *num_pieces > self.size() {
             return Err("Cannot move more than the carry limit".into());
@@ -125,6 +111,15 @@ impl Game {
 
         if drops.iter().fold(0, |sum, x| sum + x) != *num_pieces {
             return Err("Number of pieces claimed to move is diffent from number of pieces moved".into());
+        }
+
+        let cell = try!(self.board.at_reset(point));
+
+        if *num_pieces > cell.len() {
+            return Err("Trying to move more pieces than exist".into());
+        }
+        if cell.mover() != Some(self.next) {
+            return Err("Must have control to move pile".into())
         }
 
         let size = self.size();
@@ -139,10 +134,9 @@ impl Game {
                 Some(x) => x,
                 None => return Err("".into()),
             };
-            let square = try!(self.board.at_mut(&p));
             for _ in 0..*count {
                 match pieces.next() {
-                    Some(piece) => try!(square.add_piece(*piece)),
+                    Some(piece) => try!(self.board.add_piece(&p, *piece)),
                     None => return Err("Used all pieces".into()),
                 }
             }

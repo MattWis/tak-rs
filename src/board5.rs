@@ -1,19 +1,15 @@
 use std::collections::VecDeque;
 use std::collections::BTreeSet;
 use std::str::FromStr;
-use std::iter;
 use std::fmt;
 use twiddle::Twiddle;
 
 use board::Board;
 use board::Square;
-use board::PieceCount;
-use piece::Stone;
 use piece::Piece;
 use piece::Player;
 use piece;
 use point::Point;
-use turn::Direction;
 
 //TODO: Copy? (s needs to be removed first)
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
@@ -42,11 +38,15 @@ impl Board for Board5 {
 
 
     fn at(&self, point: &Point) -> Result<&Square, &str> {
-        Err("Invalid Point")
+        Err("Not implemented")
     }
 
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
-        Err("Invalid Point")
+        Err("Not implemented")
+    }
+
+    fn at_reset(&mut self, point: &Point) -> Result<Square, &str> {
+        Err("Not implemented")
     }
 
     fn size(&self) -> usize {
@@ -69,6 +69,10 @@ impl Board for Board5 {
         } else {
             return Err("Cannot place stone on top of existing stone.".into());
         }
+    }
+
+    fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
+        Ok(())
     }
 
     fn used_up(&self, piece: &Piece) -> bool {
