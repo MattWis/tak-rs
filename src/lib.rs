@@ -12,6 +12,7 @@ pub use turn::Turn;
 pub use turn::Direction;
 pub use game::Game;
 pub use board::Board;
+pub use board::NaiveBoard;
 pub use board::Square;
 pub use piece::Player;
 pub use piece::Stone;

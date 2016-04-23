@@ -6,6 +6,7 @@ use std::mem;
 use ai::Ai;
 use turn::Turn;
 use turn::Direction;
+use board::NaiveBoard;
 use board::Board;
 use board::Square;
 use piece::Player;
@@ -15,7 +16,7 @@ use point::Point;
 
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Game {
-    board: Board,
+    board: NaiveBoard,
     next: Player,
     history: Vec<Turn>,
 }
@@ -35,7 +36,7 @@ impl fmt::Display for Game {
 impl Game {
     pub fn new(size: usize) -> Game {
         Game {
-            board: Board::new(size),
+            board: NaiveBoard::new(size),
             next: Player::One,
             history: vec![],
         }

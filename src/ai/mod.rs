@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 
 use board::Board;
+use board::NaiveBoard;
 use turn::Turn;
 use turn::Turn::Place;
 use turn::Turn::Slide;
@@ -20,7 +21,7 @@ impl Ai {
         Ai { player: player }
     }
 
-    pub fn next_move(&self, turn: usize, board: &Board) -> Turn {
+    pub fn next_move(&self, turn: usize, board: &NaiveBoard) -> Turn {
         if turn < 2 {
             if board.at(&Point::new(0, 0)).unwrap().pieces.is_empty() {
                 Place { point: Point::new(0, 0), stone: Stone::Flat }
@@ -32,7 +33,7 @@ impl Ai {
         }
     }
 
-    pub fn possible_moves(&self, board: &Board) -> Vec<Turn> {
+    pub fn possible_moves(&self, board: &NaiveBoard) -> Vec<Turn> {
         let mut moves = vec![];
         for x in 0..board.size() {
             for y in 0..board.size() {
@@ -48,7 +49,7 @@ impl Ai {
         moves
     }
 
-    fn possible_moves_place(&self, board: &Board, point: Point, moves: &mut Vec<Turn>) {
+    fn possible_moves_place(&self, board: &NaiveBoard, point: Point, moves: &mut Vec<Turn>) {
         if !board.used_up(&Piece::new(Stone::Flat, self.player)) {
             moves.push(Place { point: point, stone: Stone::Flat });
             moves.push(Place { point: point, stone: Stone::Standing });
@@ -58,7 +59,7 @@ impl Ai {
         }
     }
 
-    fn possible_moves_slide(&self, board: &Board, point: Point, moves: &mut Vec<Turn>) {
+    fn possible_moves_slide(&self, board: &NaiveBoard, point: Point, moves: &mut Vec<Turn>) {
         let pile_height = board.at(&point).unwrap().pieces.len();
         for dir in Direction::all() {
             let mut clear = 0;
@@ -133,7 +134,7 @@ fn add_to_length(v: &Drops) -> Option<Drops>{
     }
 }
 
-pub fn advantage(board: Board) -> i64 {
+pub fn advantage(board: NaiveBoard) -> i64 {
 //Relevant stats
 //flat score
 //road options by length (how to compute?)

@@ -135,13 +135,28 @@ impl PieceCount {
     }
 }
 
+pub trait Board {
+    fn new(usize) -> Self;
+    fn at(&self, point: &Point) -> Result<&Square, &str>;
+    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
+    fn size(&self) -> usize;
+    fn squares(&self) -> Vec<&Square>;
+    fn full(&self) -> bool;
+    fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
+    fn used_up(&self, piece: &Piece) -> bool;
+    fn follow(&self,
+              starts: &mut VecDeque<Point>,
+              player: Player)
+              -> BTreeSet<Point>;
+}
+
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
-pub struct Board {
+pub struct NaiveBoard {
     grid: Vec<Vec<Square>>,
     count: PieceCount,
 }
 
-impl fmt::Display for Board {
+impl fmt::Display for NaiveBoard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut full = String::new();
         let max = match self.grid
@@ -171,39 +186,39 @@ impl fmt::Display for Board {
     }
 }
 
-impl Board {
-    pub fn new(board_size: usize) -> Board {
+impl Board for NaiveBoard {
+    fn new(board_size: usize) -> NaiveBoard {
         assert!(board_size >= 4 && board_size <= 8);
-        Board {
+        NaiveBoard {
             grid: vec![vec![Square::new(); board_size]; board_size],
             count: PieceCount::new(board_size),
         }
     }
 
-    pub fn at(&self, point: &Point) -> Result<&Square, &str> {
+    fn at(&self, point: &Point) -> Result<&Square, &str> {
         let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
         row.get(point.x).ok_or("Invalid point")
     }
 
-    pub fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
+    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
         let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
         row.get_mut(point.x).ok_or("Invalid point")
     }
 
-    pub fn size(&self) -> usize {
+    fn size(&self) -> usize {
         self.grid.len()
     }
 
-    pub fn squares(&self) -> Vec<&Square> {
+    fn squares(&self) -> Vec<&Square> {
         self.grid.iter().flat_map(|row| row.iter()).collect()
     }
 
     /// Checks to see if all spaces have at least one piece
-    pub fn full(&self) -> bool {
+    fn full(&self) -> bool {
         !self.squares().iter().any(|sq| sq.pieces.is_empty())
     }
 
-    pub fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
+    fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
         {
             let square = try!(self.at_mut(point));
             try!(square.place_piece(piece));
@@ -212,11 +227,11 @@ impl Board {
         Ok(())
     }
 
-    pub fn used_up(&self, piece: &Piece) -> bool {
+    fn used_up(&self, piece: &Piece) -> bool {
         self.count.used_up(piece)
     }
 
-    pub fn follow(&self,
+    fn follow(&self,
               starts: &mut VecDeque<Point>,
               player: Player)
               -> BTreeSet<Point> {
@@ -240,7 +255,7 @@ impl Board {
 
 //enum
 
-impl FromStr for Board {
+impl FromStr for NaiveBoard {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Pay a runtime cost for String slices to guarantee no panics
@@ -308,7 +323,7 @@ impl FromStr for Board {
         if size < 4 || size > 8 {
             return Err(());
         }
-        let mut board = Board::new(size);
+        let mut board = NaiveBoard::new(size);
 
         let iter = s.split("/");
         for (i, str) in iter.enumerate() {
