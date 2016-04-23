@@ -50,7 +50,7 @@ impl Board for Board5 {
     }
 
     fn size(&self) -> usize {
-        self.grid.len()
+        5
     }
 
     fn squares(&self) -> Vec<&Square> {
@@ -59,7 +59,14 @@ impl Board for Board5 {
 
     /// Checks to see if all spaces have at least one piece
     fn full(&self) -> bool {
-        false
+        for row in self.grid.iter() {
+            for square in row.iter() {
+                if square.bits(16..13) == 0 {
+                    return false
+                }
+            }
+        }
+        true
     }
 
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
