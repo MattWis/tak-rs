@@ -138,11 +138,7 @@ impl PieceCount {
 
 pub trait Board {
     fn new(usize) -> Self;
-    fn at(&self, point: &Point) -> Result<&Square, &str>;
-    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
-    fn at_reset(&mut self, point: &Point) -> Result<Square, &str>;
     fn size(&self) -> usize;
-    fn squares(&self) -> Vec<&Square>;
     fn full(&self) -> bool;
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
@@ -151,6 +147,14 @@ pub trait Board {
               starts: &mut VecDeque<Point>,
               player: Player)
               -> BTreeSet<Point>;
+
+    // These 2 aren't necessarily efficient
+    fn at(&self, point: &Point) -> Result<&Square, &str>;
+    fn at_reset(&mut self, point: &Point) -> Result<Square, &str>;
+
+    // I want these to die
+    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
+    fn squares(&self) -> Vec<&Square>;
 }
 
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]

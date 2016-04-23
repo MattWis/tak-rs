@@ -72,7 +72,7 @@ impl Board for Board5 {
     }
 
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
-        Ok(())
+        Err("Not implemented".into())
     }
 
     fn used_up(&self, piece: &Piece) -> bool {
