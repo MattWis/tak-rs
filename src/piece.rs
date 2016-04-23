@@ -1,5 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
+use twiddle::Twiddle;
+use enum_primitive::FromPrimitive;
 
 enum_from_primitive! {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, RustcDecodable, RustcEncodable)]
@@ -91,7 +93,14 @@ impl Piece {
     }
 
     pub fn to3bits(&self) -> u8 {
-        return (self.owner as u8) << 2 + (self.stone as u8)
+        ((self.owner as u8) << 2) | (self.stone as u8)
+    }
+
+    pub fn from3bits(p: u8) -> Piece {
+        Piece {
+            stone: Stone::from_u8(p.bits(1..0)).unwrap(),
+            owner: if p.bit(2) { Player::One } else { Player::Two },
+        }
     }
 }
 

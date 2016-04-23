@@ -26,6 +26,10 @@ impl fmt::Display for Board5 {
     }
 }
 
+fn top_piece_bits(spot: u16) -> u8 {
+    spot.bits(15..13) as u8
+}
+
 impl Board for Board5 {
     fn new(board_size: usize) -> Board5 {
         assert!(board_size == 5);
@@ -61,7 +65,7 @@ impl Board for Board5 {
     fn full(&self) -> bool {
         for row in self.grid.iter() {
             for square in row.iter() {
-                if square.bits(16..13) == 0 {
+                if square.bits(15..13) == 0 {
                     return false
                 }
             }
@@ -70,7 +74,7 @@ impl Board for Board5 {
     }
 
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
-        if self.grid[point.x][point.y].bits(16..13) == 0 {
+        if top_piece_bits(self.grid[point.x][point.y]) == 0 {
             self.grid[point.x][point.y] = (piece.to3bits() as u16) << 13;
             Ok(())
         } else {
@@ -79,7 +83,29 @@ impl Board for Board5 {
     }
 
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
-        Err("Not implemented".into())
+        let spot = self.grid[point.x][point.y];
+        let piece_bits = piece.to3bits() as u16;
+        let top_bits = top_piece_bits(spot);
+        if top_bits == 0 {
+            self.grid[point.x][point.y] = piece_bits << 13;
+            return Ok(());
+        }
+        let mut top = Piece::from3bits(top_bits);
+        try!(piece.move_onto(&mut top));
+
+        if spot.bits(1..0) == 0 {
+            let mut temp = spot.bits(11..2) >> 2;
+            if top.owner == Player::One {
+                temp = temp | 0x400;
+            } else {
+                temp = temp | 0x800;
+            }
+            self.grid[point.x][point.y] = temp | (piece_bits << 13);
+            Ok(())
+        } else {
+            // Need to figure out continuations
+            Err("Not implemented".into())
+        }
     }
 
     fn used_up(&self, piece: &Piece) -> bool {
