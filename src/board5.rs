@@ -6,7 +6,6 @@ use twiddle::Twiddle;
 use enum_primitive::FromPrimitive;
 
 use board::Board;
-use board::Square;
 use board::PieceIter;
 use piece::Piece;
 use piece::Player;
@@ -44,13 +43,10 @@ pub fn advance_piece_iterator(spot: &mut u16, extra: &mut [u16; 7])
     }
 }
 
-//TODO: Copy? (s needs to be removed first)
-#[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
+#[derive(Copy, Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct Board5 {
     grid: [ [u16; 5]; 5],
     continuations: [u16; 7],
-    s: Square, // This is just a stupid hack for compilation - 4/23/16
-
 }
 
 impl fmt::Display for Board5 {
@@ -69,7 +65,6 @@ impl Board for Board5 {
         Board5 {
             grid: [[0; 5]; 5],
             continuations: [0; 7],
-            s: Square::new(),
         }
     }
 

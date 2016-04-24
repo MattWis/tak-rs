@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 
 use board::Board;
-use board::NaiveBoard;
+use board_naive::NaiveBoard;
 use turn::Turn;
 use turn::Turn::Place;
 use turn::Turn::Slide;

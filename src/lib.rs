@@ -8,6 +8,7 @@ pub mod point;
 pub mod turn;
 pub mod board;
 pub mod board5;
+pub mod board_naive;
 pub mod game;
 pub mod ai;
 
@@ -16,9 +17,8 @@ pub use turn::Turn;
 pub use turn::Direction;
 pub use game::Game;
 pub use board::Board;
-pub use board::NaiveBoard;
+pub use board_naive::NaiveBoard;
 pub use board5::Board5;
-pub use board::Square;
 pub use piece::Player;
 pub use piece::Stone;
 pub use piece::Piece;
