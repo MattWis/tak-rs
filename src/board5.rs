@@ -100,10 +100,6 @@ impl Board for Board5 {
         })
     }
 
-    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
-        Err("Not implemented")
-    }
-
     fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str> {
         let mut extra = self.continuations;
         let location = ((point.x * 5 + point.y) as u16) << 11;
@@ -132,10 +128,6 @@ impl Board for Board5 {
 
     fn size(&self) -> usize {
         5
-    }
-
-    fn squares(&self) -> Vec<&Square> {
-        vec![&self.s]
     }
 
     /// Checks to see if all spaces have at least one piece

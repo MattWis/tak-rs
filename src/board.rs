@@ -174,12 +174,25 @@ impl PieceIter {
         let dup = self.clone();
         dup.last().map(|piece| piece.owner())
     }
+
+    // Used for winning the flats
+    pub fn scorer(&self) -> Option<Player> {
+        let dup = self.clone();
+        dup.last().and_then(|piece|
+            if piece.stone() == Stone::Flat {
+                Some(piece.owner())
+            } else {
+                None
+            })
+    }
 }
 
 pub trait Board {
     fn new(usize) -> Self;
     fn size(&self) -> usize;
-    fn full(&self) -> bool;
+    fn full(&self) -> bool {
+        !self.squares().iter().any(|it| it.clone().next() == None)
+    }
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
     fn used_up(&self, piece: &Piece) -> bool;
@@ -191,10 +204,16 @@ pub trait Board {
     // These 2 aren't necessarily efficient
     fn at(&self, point: &Point) -> Result<PieceIter, &str>;
     fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str>;
+    fn squares(&self) -> Vec<PieceIter> {
+        let mut v = Vec::new();
+        for x in 0..self.size() {
+            for y in 0..self.size() {
+                v.push(self.at(&Point::new(x, y)).unwrap());
+            }
+        }
+        v
+    }
 
-    // I want these to die
-    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str>;
-    fn squares(&self) -> Vec<&Square>;
 }
 
 #[derive(Clone, Debug, RustcDecodable, RustcEncodable)]
@@ -239,6 +258,11 @@ impl NaiveBoard {
         let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
         row.get(point.x).ok_or("Invalid point")
     }
+
+    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
+        let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
+        row.get_mut(point.x).ok_or("Invalid point")
+    }
 }
 
 impl Board for NaiveBoard {
@@ -259,11 +283,6 @@ impl Board for NaiveBoard {
         })
     }
 
-    fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
-        let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
-        row.get_mut(point.x).ok_or("Invalid point")
-    }
-
     fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str> {
         let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
         let square = try!(row.get_mut(point.x).ok_or("Invalid point"));
@@ -275,15 +294,6 @@ impl Board for NaiveBoard {
 
     fn size(&self) -> usize {
         self.grid.len()
-    }
-
-    fn squares(&self) -> Vec<&Square> {
-        self.grid.iter().flat_map(|row| row.iter()).collect()
-    }
-
-    /// Checks to see if all spaces have at least one piece
-    fn full(&self) -> bool {
-        !self.squares().iter().any(|sq| sq.pieces.is_empty())
     }
 
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
