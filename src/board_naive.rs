@@ -12,6 +12,7 @@ use piece;
 use board::Board;
 use board::PieceIter;
 use board::PieceCount;
+use board::board_from_str;
 use point::Point;
 use turn::Direction;
 
@@ -206,85 +207,9 @@ impl Board for NaiveBoard {
 }
 
 impl FromStr for NaiveBoard {
-    type Err = ();
+    type Err=();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Pay a runtime cost for String slices to guarantee no panics
-        fn slice(s: &str, start: usize, end: usize) -> String {
-            s.chars().skip(start).take(end - start).collect::<String>()
-        }
-
-        // Parse the pieces of a non-empty square
-        fn parse_square(s: &str) -> Result<Square, String> {
-            let mut sq = Square::new();
-            let mut i = 0;
-            while i < s.chars().count() {
-                let c = s.chars().nth(i);
-                let stone = s.chars().nth(i+1);
-                let piece = if c == Some('1') {
-                    if stone == Some('S') {
-                        i += 1;
-                        Piece::new(Stone::Standing, Player::One)
-                    } else if stone == Some('C') {
-                        i += 1;
-                        Piece::new(Stone::Capstone, Player::One)
-                    } else {
-                        Piece::new(Stone::Flat, Player::One)
-                    }
-                } else if c == Some('2') {
-                    if stone == Some('S') {
-                        i += 1;
-                        Piece::new(Stone::Standing, Player::Two)
-                    } else if stone == Some('C') {
-                        i += 1;
-                        Piece::new(Stone::Capstone, Player::Two)
-                    } else {
-                        Piece::new(Stone::Flat, Player::Two)
-                    }
-                } else {
-                    return Err("Out of order stuff".into())
-                };
-                try!(sq.add_piece(piece));
-                i += 1;
-            }
-            Ok(sq)
-        }
-
-        fn parse_row(s: &str) -> Result<Vec<Square>, String> {
-            println!("{}", s);
-            let mut v = vec![];
-            for str in s.split(",") {
-                let mut entry = if slice(str, 0, 1) == "x" {
-                    match slice(str, 1, 2).parse::<usize>() {
-                        Ok(num) => vec![Square::new(); num],
-                        Err(_) => vec![Square::new()],
-                    }
-                } else if slice(str, 0, 1) == "1" || slice(str, 0, 1) == "2" {
-                    let sq = try!(parse_square(str));
-                    vec![sq]
-                } else {
-                    return Err("Empty cell should be marked with 'x'".into())
-                };
-                v.append(&mut entry);
-            }
-            Ok(v)
-        }
-
-        let size = s.chars().filter(|c| *c == '/').count() + 1;
-        if size < 4 || size > 8 {
-            return Err(());
-        }
-        let mut board = NaiveBoard::new(size);
-
-        let iter = s.split("/");
-        for (i, str) in iter.enumerate() {
-            board.grid[size - i - 1] = match parse_row(&str) {
-                Ok(x) => x,
-                Err(_) => return Err(()),
-            };
-            if board.grid[size - i - 1].len() != size {
-                return Err(());
-            }
-        }
-        Ok(board)
+        board_from_str::<NaiveBoard>(s)
     }
 }
+

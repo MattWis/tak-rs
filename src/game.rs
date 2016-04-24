@@ -7,6 +7,7 @@ use turn::Turn;
 use turn::Direction;
 use board::PieceIter;
 use board::Board;
+use board5::Board5;
 use board_naive::NaiveBoard;
 use piece::Player;
 use piece::Stone;

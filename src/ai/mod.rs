@@ -21,7 +21,7 @@ impl Ai {
         Ai { player: player }
     }
 
-    pub fn next_move(&self, turn: usize, board: &NaiveBoard) -> Turn {
+    pub fn next_move<T: Board>(&self, turn: usize, board: &T) -> Turn {
         if turn < 2 {
             if board.at(&Point::new(0, 0)).unwrap().count() == 0 {
                 Place { point: Point::new(0, 0), stone: Stone::Flat }
@@ -33,7 +33,7 @@ impl Ai {
         }
     }
 
-    pub fn possible_moves(&self, board: &NaiveBoard) -> Vec<Turn> {
+    pub fn possible_moves<T: Board>(&self, board: &T) -> Vec<Turn> {
         let mut moves = vec![];
         for x in 0..board.size() {
             for y in 0..board.size() {
@@ -49,7 +49,7 @@ impl Ai {
         moves
     }
 
-    fn possible_moves_place(&self, board: &NaiveBoard, point: Point, moves: &mut Vec<Turn>) {
+    fn possible_moves_place<T: Board>(&self, board: &T, point: Point, moves: &mut Vec<Turn>) {
         if !board.used_up(&Piece::new(Stone::Flat, self.player)) {
             moves.push(Place { point: point, stone: Stone::Flat });
             moves.push(Place { point: point, stone: Stone::Standing });
@@ -59,7 +59,7 @@ impl Ai {
         }
     }
 
-    fn possible_moves_slide(&self, board: &NaiveBoard, point: Point, moves: &mut Vec<Turn>) {
+    fn possible_moves_slide<T: Board>(&self, board: &T, point: Point, moves: &mut Vec<Turn>) {
         let pile_height = board.at(&point).unwrap().count();
         for dir in Direction::all() {
             let mut clear = 0;

@@ -146,5 +146,82 @@ pub trait Board {
         }
         v
     }
+}
 
+fn parse_square<T: Board>(s: &str, b: &mut T, point: &Point)
+                          -> Result<(), String> {
+    let mut i = 0;
+    while i < s.chars().count() {
+        let c = s.chars().nth(i);
+        let stone = s.chars().nth(i+1);
+        let piece = if c == Some('1') {
+            if stone == Some('S') {
+                i += 1;
+                Piece::new(Stone::Standing, Player::One)
+            } else if stone == Some('C') {
+                i += 1;
+                Piece::new(Stone::Capstone, Player::One)
+            } else {
+                Piece::new(Stone::Flat, Player::One)
+            }
+        } else if c == Some('2') {
+            if stone == Some('S') {
+                i += 1;
+                Piece::new(Stone::Standing, Player::Two)
+            } else if stone == Some('C') {
+                i += 1;
+                Piece::new(Stone::Capstone, Player::Two)
+            } else {
+                Piece::new(Stone::Flat, Player::Two)
+            }
+        } else {
+            return Err("Out of order stuff".into())
+        };
+        try!(b.add_piece(point, piece));
+        i += 1;
+    }
+    Ok(())
+}
+
+fn parse_row<T: Board>(s: &str, b: &mut T, y: usize)
+                       -> Result<(), String> {
+    // Pay a runtime cost for String slices to guarantee no panics
+    fn slice(s: &str, start: usize, end: usize) -> String {
+        s.chars().skip(start).take(end - start).collect::<String>()
+    }
+    println!("{}", s);
+    let mut index = 0;
+    for str in s.split(",") {
+        let mut entry = if slice(str, 0, 1) == "x" {
+            match slice(str, 1, 2).parse::<usize>() {
+                Ok(num) => index += num,
+                Err(_) => index += 1,
+            }
+        } else if slice(str, 0, 1) == "1" || slice(str, 0, 1) == "2" {
+            let sq = try!(parse_square(str, b, &Point::new(index, y)));
+        } else {
+            return Err("Empty cell should be marked with 'x'".into())
+        };
+    }
+    Ok(())
+}
+
+pub fn board_from_str<T: Board>(s: &str) -> Result<T, ()> {
+
+    // Parse the pieces of a non-empty square
+
+    let size = s.chars().filter(|c| *c == '/').count() + 1;
+    if size != 5 {
+        return Err(());
+    }
+    let mut board = T::new(size);
+
+    let iter = s.split("/");
+    for (i, str) in iter.enumerate() {
+        match parse_row(&str, &mut board, 4 - i) {
+            Ok(x) => x,
+            Err(_) => return Err(()),
+        };
+    }
+    Ok(board)
 }
