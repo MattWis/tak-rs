@@ -8,11 +8,11 @@ use std::mem;
 use piece::Stone;
 use piece::Piece;
 use piece::Player;
-use piece;
 use board::Board;
 use board::PieceIter;
 use board::PieceCount;
 use board::board_from_str;
+use board::str_from_board;
 use point::Point;
 use turn::Direction;
 
@@ -89,36 +89,6 @@ pub struct NaiveBoard {
     count: PieceCount,
 }
 
-impl fmt::Display for NaiveBoard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut full = String::new();
-        let max = match self.grid
-                            .iter()
-                            .map(|r| r.iter().map(|c| c.len()).max())
-                            .max() {
-            Some(Some(x)) => x,
-            _ => return Err(fmt::Error),
-        };
-
-        let width = (max * 2 + 1) * self.grid.len();
-        full.push_str(&(iter::repeat("_").take(width).collect::<String>()));
-        full.push_str("\n");
-        for line in self.grid.iter().rev() {
-            for cell in line.iter() {
-                cell.add_to_string(&mut full, max);
-            }
-            full.push_str("\n");
-        }
-        try!(write!(f, "{}", full));
-
-        try!(write!(f, "P1: {}/{} Flatstones\n", self.count.p1_flat, self.count.max_flat));
-        try!(write!(f, "P1: {}/{} Capstones\n", self.count.p1_cap, self.count.max_cap));
-        try!(write!(f, "P2: {}/{} Flatstones\n", self.count.p2_flat, self.count.max_flat));
-        write!(f, "P2: {}/{} Capstones\n", self.count.p2_cap, self.count.max_cap)
-
-    }
-}
-
 impl NaiveBoard {
     // Internal use only
     fn at_int(&self, point: &Point) -> Result<&Square, &str> {
@@ -180,8 +150,8 @@ impl Board for NaiveBoard {
         Ok(())
     }
 
-    fn used_up(&self, piece: &Piece) -> bool {
-        self.count.used_up(piece)
+    fn count(&self) -> PieceCount {
+        self.count
     }
 
     fn follow(&self,
@@ -213,3 +183,8 @@ impl FromStr for NaiveBoard {
     }
 }
 
+impl fmt::Display for NaiveBoard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        str_from_board(self, f)
+    }
+}

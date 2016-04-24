@@ -5,7 +5,6 @@ use std::fmt;
 use ai::Ai;
 use turn::Turn;
 use turn::Direction;
-use board::PieceIter;
 use board::Board;
 use board5::Board5;
 use board_naive::NaiveBoard;
@@ -99,7 +98,7 @@ impl Game {
             return Err("Play flat piece on first turn".into())
         }
         let piece = Piece::new(*stone, *owner);
-        if self.board.used_up(&piece) {
+        if self.board.count().used_up(&piece) {
             return Err("Player has used all of that type of stone".into())
         }
         self.board.place_piece(point, piece)
@@ -190,10 +189,10 @@ impl Game {
     /// Counts the number of pieces laid, and if either player is out of
     /// pieces, then tallies the points to determine the winner
     pub fn check_flat_winner(&self) -> Option<Player> {
-        let used = (self.board.used_up(&Piece::new(Stone::Flat, Player::One)) &&
-                    self.board.used_up(&Piece::new(Stone::Capstone, Player::One))) ||
-                   (self.board.used_up(&Piece::new(Stone::Flat, Player::One)) &&
-                    self.board.used_up(&Piece::new(Stone::Capstone, Player::One)));
+        let used = (self.board.count().used_up(&Piece::new(Stone::Flat, Player::One)) &&
+                    self.board.count().used_up(&Piece::new(Stone::Capstone, Player::One))) ||
+                   (self.board.count().used_up(&Piece::new(Stone::Flat, Player::One)) &&
+                    self.board.count().used_up(&Piece::new(Stone::Capstone, Player::One)));
 
         if used || self.board.full() {
             let mut p1_top = 0;

@@ -1,6 +1,5 @@
 use std::fmt;
 use std::str::FromStr;
-use twiddle::Twiddle;
 use enum_primitive::FromPrimitive;
 
 enum_from_primitive! {

@@ -1,17 +1,13 @@
 use std::collections::VecDeque;
 use std::collections::BTreeSet;
-use std::str::FromStr;
-use std::iter;
 use std::fmt;
-use std::mem;
+use std::iter;
 
 use piece::Stone;
 use piece::Piece;
 use piece::Player;
-use piece;
 use board5;
 use point::Point;
-use turn::Direction;
 
 #[derive(Copy, Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct PieceCount {
@@ -25,7 +21,7 @@ pub struct PieceCount {
 
 impl PieceCount {
     pub fn new(size: usize) -> PieceCount {
-        let flat_counts = [15, 20, 30, 40, 50];
+        let flat_counts = [15, 21, 30, 40, 50];
         let capstone_counts = [0, 1, 1, 2, 2];
         PieceCount {
             p1_flat: 0,
@@ -128,7 +124,7 @@ pub trait Board {
     }
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
     fn add_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String>;
-    fn used_up(&self, piece: &Piece) -> bool;
+    fn count(&self) -> PieceCount;
     fn follow(&self,
               starts: &mut VecDeque<Point>,
               player: Player)
@@ -192,13 +188,13 @@ fn parse_row<T: Board>(s: &str, b: &mut T, y: usize)
     println!("{}", s);
     let mut index = 0;
     for str in s.split(",") {
-        let mut entry = if slice(str, 0, 1) == "x" {
+        if slice(str, 0, 1) == "x" {
             match slice(str, 1, 2).parse::<usize>() {
                 Ok(num) => index += num,
                 Err(_) => index += 1,
             }
         } else if slice(str, 0, 1) == "1" || slice(str, 0, 1) == "2" {
-            let sq = try!(parse_square(str, b, &Point::new(index, y)));
+            try!(parse_square(str, b, &Point::new(index, y)));
         } else {
             return Err("Empty cell should be marked with 'x'".into())
         };
@@ -207,9 +203,6 @@ fn parse_row<T: Board>(s: &str, b: &mut T, y: usize)
 }
 
 pub fn board_from_str<T: Board>(s: &str) -> Result<T, ()> {
-
-    // Parse the pieces of a non-empty square
-
     let size = s.chars().filter(|c| *c == '/').count() + 1;
     if size != 5 {
         return Err(());
@@ -224,4 +217,35 @@ pub fn board_from_str<T: Board>(s: &str) -> Result<T, ()> {
         };
     }
     Ok(board)
+}
+
+pub fn str_from_board<T: Board>(b: &T, f: &mut fmt::Formatter) -> fmt::Result {
+    let mut full = String::new();
+    let max = b.squares().iter().map(|x| x.clone().count())
+               .max().unwrap_or(0);
+
+    let width = (max * 2 + 1) * b.size();
+    full.push_str(&(iter::repeat("_").take(width).collect::<String>()));
+    full.push_str("\n");
+    for y in 0..b.size() {
+        for x in 0..b.size() {
+            full.push_str("|");
+            let iter = b.at(&Point::new(x,b.size() - 1 - y)).unwrap();
+            let len = iter.clone().count();
+            for piece in iter {
+                full.push_str(&(piece.to_string()));
+            }
+            let space: String = iter::repeat("  ").take(max - len).collect();
+            full.push_str(&space);
+        }
+        full.push_str("\n");
+    }
+
+    try!(write!(f, "{}", full));
+
+    let count = b.count();
+    try!(write!(f, "P1: {}/{} Flatstones\n", count.p1_flat, count.max_flat));
+    try!(write!(f, "P1: {}/{} Capstones\n", count.p1_cap, count.max_cap));
+    try!(write!(f, "P2: {}/{} Flatstones\n", count.p2_flat, count.max_flat));
+    write!(f, "P2: {}/{} Capstones\n", count.p2_cap, count.max_cap)
 }

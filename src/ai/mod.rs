@@ -50,11 +50,11 @@ impl Ai {
     }
 
     fn possible_moves_place<T: Board>(&self, board: &T, point: Point, moves: &mut Vec<Turn>) {
-        if !board.used_up(&Piece::new(Stone::Flat, self.player)) {
+        if !board.count().used_up(&Piece::new(Stone::Flat, self.player)) {
             moves.push(Place { point: point, stone: Stone::Flat });
             moves.push(Place { point: point, stone: Stone::Standing });
         }
-        if !board.used_up(&Piece::new(Stone::Capstone, self.player)) {
+        if !board.count().used_up(&Piece::new(Stone::Capstone, self.player)) {
             moves.push(Place { point: point, stone: Stone::Capstone });
         }
     }

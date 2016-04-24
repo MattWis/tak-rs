@@ -7,11 +7,11 @@ use enum_primitive::FromPrimitive;
 
 use board::Board;
 use board::PieceIter;
+use board::PieceCount;
 use board::board_from_str;
+use board::str_from_board;
 use piece::Piece;
 use piece::Player;
-use piece::Stone;
-use piece;
 use point::Point;
 
 pub fn advance_piece_iterator(spot: &mut u16, extra: &mut [u16; 7])
@@ -50,12 +50,6 @@ pub struct Board5 {
     continuations: [u16; 7],
 }
 
-impl fmt::Display for Board5 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Not Implemented")
-    }
-}
-
 fn top_piece_bits(spot: u16) -> u8 {
     spot.bits(15..13) as u8
 }
@@ -74,18 +68,18 @@ impl Board for Board5 {
         let mut extra = self.continuations;
         let location = ((point.x * 5 + point.y) as u16) << 11;
         for i in 0..7 {
-            if extra[i] & location != location {
+            if (extra[i] & location) != location {
                 extra[i] = 0;
-            } else {
-                while extra[i] & 3 == 0 {
+            } else if extra[i] != 0 {
+                while (extra[i] & 3) == 0 {
                     extra[i] = (extra[i] & location) | extra[i].bits(9..2);
                 }
             }
         }
 
         let mut spot = self.grid[point.x][point.y];
-        if spot & 0x0FFF != 0 {
-            while spot & 3 == 0 {
+        if (spot & 0x0FFF) != 0 {
+            while (spot & 3) == 0 {
                 spot = (spot & 0xE000) | spot.bits(11..2);
             }
         }
@@ -102,7 +96,7 @@ impl Board for Board5 {
         for i in 0..7 {
             if extra[i] & location != location {
                 extra[i] = 0;
-            } else {
+            } else if extra[i] != 0 {
                 self.continuations[i] = 0;
                 while extra[i] & 3 == 0 {
                     extra[i] = (extra[i] & location) | extra[i].bits(9..2);
@@ -112,8 +106,10 @@ impl Board for Board5 {
 
         let mut spot = self.grid[point.x][point.y];
         self.grid[point.x][point.y] = 0;
-        while spot & 3 == 0 {
-            spot = (spot & 0xE000) | spot.bits(11..2);
+        if (spot & 0x0FFF) != 0 {
+            while spot & 3 == 0 {
+                spot = (spot & 0xE000) | spot.bits(11..2);
+            }
         }
 
         Ok(PieceIter::Board5Iter {
@@ -136,6 +132,34 @@ impl Board for Board5 {
             }
         }
         true
+    }
+
+    fn count(&self) -> PieceCount {
+        let mut pieces = PieceCount::new(self.size());
+
+        for row in self.grid.iter() {
+            for spot in row.iter() {
+                match Piece::from_u8(spot.bits(15..13) as u8) {
+                    Some(Piece::OneFlat) => pieces.p1_flat += 1,
+                    Some(Piece::OneStanding) => pieces.p1_flat += 1,
+                    Some(Piece::OneCapstone) => pieces.p1_flat += 1,
+                    Some(Piece::TwoFlat) => pieces.p2_flat += 1,
+                    Some(Piece::TwoStanding) => pieces.p2_flat += 1,
+                    Some(Piece::TwoCapstone) => pieces.p2_cap += 1,
+                    None => {},
+                }
+
+                for i in 0..6 {
+                    match spot.bits((2 * i + 1)..(2 * i)) {
+                        1 => pieces.p1_flat += 1,
+                        2 => pieces.p2_flat += 1,
+                        _ => {},
+                    }
+                }
+            }
+        }
+        //TODO: Count continuations
+        pieces
     }
 
     fn place_piece(&mut self, point: &Point, piece: Piece) -> Result<(), String> {
@@ -169,7 +193,6 @@ impl Board for Board5 {
             Ok(())
         } else {
             // Need to add the bumped piece to an existing continuation
-            let my_spot = 0 as u16;
             for i in 0..7 {
                 let cont = self.continuations[i];
                 if cont.bits(15..11) == (point.x * 5 + point.y) as u16 {
@@ -202,10 +225,6 @@ impl Board for Board5 {
         }
     }
 
-    fn used_up(&self, piece: &Piece) -> bool {
-        false
-    }
-
     fn follow(&self,
               starts: &mut VecDeque<Point>,
               player: Player)
@@ -218,5 +237,11 @@ impl FromStr for Board5 {
     type Err=();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         board_from_str::<Board5>(s)
+    }
+}
+
+impl fmt::Display for Board5 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        str_from_board(self, f)
     }
 }
