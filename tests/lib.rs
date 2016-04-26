@@ -37,9 +37,9 @@ fn basic_placement() {
                 |  |  |  |C2|  \n\
                 |F2|  |  |  |  \n\
                 |S1|  |  |F1|  \n\
-                P1: 2/20 Flatstones\n\
+                P1: 2/21 Flatstones\n\
                 P1: 0/1 Capstones\n\
-                P2: 1/20 Flatstones\n\
+                P2: 1/21 Flatstones\n\
                 P2: 1/1 Capstones\n");
 }
 
@@ -77,7 +77,6 @@ fn must_own_pile_to_move() {
         Err(_) => return,
     }
 }
-
 
 #[test]
 fn invalid_movement_onto_standing() {
@@ -167,9 +166,9 @@ fn squash() {
                 |    |F1  |    |    |    \n\
                 |    |F2  |    |    |    \n\
                 |F1C2|F1  |    |    |    \n\
-                P1: 3/20 Flatstones\n\
+                P1: 3/21 Flatstones\n\
                 P1: 0/1 Capstones\n\
-                P2: 1/20 Flatstones\n\
+                P2: 1/21 Flatstones\n\
                 P2: 1/1 Capstones\n");
 }
 
@@ -258,7 +257,7 @@ fn cannot_play_too_many_flats() {
                  "b2", "e1+", "b3", "e2-", "b4", "e1+", "c1", "e2-", "c2", "e1+",
                  "c3", "e2-", "c4", "e1+", "d1", "e2-", "d2", "e1+", "d3", "e2-",
                  "d4", "e1+", "d4<", "e2<", "d3<", "2d2-2", "d4", "3d1<3", "d3",
-                 "c1+", "d2", "2c2<2", "d1", "e1"];
+                 "c1+", "d2", "2c2<2", "d1", "e1", "c2", "e3"];
     play_no_win(m, &mut game);
     match game.play("e5", Player::One, Some(Player::One)) {
         Ok(_) => panic!(""),
