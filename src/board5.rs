@@ -54,6 +54,13 @@ fn top_piece_bits(spot: u16) -> u8 {
     spot.bits(15..13) as u8
 }
 
+impl Board5 {
+    // Return shifted location value
+    fn location(p: &Point) -> u16 {
+        ((p.x * 5 + p.y + 1) as u16) << 11
+    }
+}
+
 impl Board for Board5 {
     fn new(board_size: usize) -> Board5 {
         assert!(board_size == 5);
@@ -66,7 +73,7 @@ impl Board for Board5 {
 
     fn at(&self, point: &Point) -> Result<PieceIter, &str> {
         let mut extra = self.continuations;
-        let location = ((point.x * 5 + point.y) as u16) << 11;
+        let location = Board5::location(point);
         for i in 0..7 {
             if (extra[i] & location) != location {
                 extra[i] = 0;
@@ -92,7 +99,7 @@ impl Board for Board5 {
 
     fn at_reset(&mut self, point: &Point) -> Result<PieceIter, &str> {
         let mut extra = self.continuations;
-        let location = ((point.x * 5 + point.y) as u16) << 11;
+        let location = Board5::location(point);
         for i in 0..7 {
             if extra[i] & location != location {
                 extra[i] = 0;
@@ -195,7 +202,7 @@ impl Board for Board5 {
             // Need to add the bumped piece to an existing continuation
             for i in 0..7 {
                 let cont = self.continuations[i];
-                if cont.bits(15..11) == (point.x * 5 + point.y) as u16 {
+                if (cont & 0xF800) == Board5::location(point) {
                     let mut temp: u16 = cont & 0xF800; // Keep location
                     temp |= cont.bits(9..2); // Shift everything thats there
                     temp |= lowest << 9; // Add in the bumped piece
@@ -213,7 +220,7 @@ impl Board for Board5 {
                 let cont = self.continuations[i];
                 if cont.bits(15..11) == 0 {
                     // It's unclaimed - let's claim it by setting the location
-                    let mut temp: u16 = ((point.x * 5 + point.y) as u16) << 11;
+                    let mut temp: u16 = Board5::location(point);
                     temp |= lowest << 9; // Add in the bumped piece
                     self.continuations[i] = temp;
                     return Ok(());
