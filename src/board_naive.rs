@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 use std::collections::BTreeSet;
 use std::str::FromStr;
-use std::iter;
 use std::fmt;
 use std::mem;
 
@@ -47,16 +46,6 @@ impl Square {
         Ok(())
     }
 
-    fn add_to_string(&self, string: &mut String, max_in_cell: usize) -> () {
-        string.push_str("|");
-        for piece in self.pieces.iter() {
-            string.push_str(&(piece.to_string()));
-        }
-        let padding = max_in_cell - self.len();
-        let space: String = iter::repeat("  ").take(padding).collect();
-        string.push_str(&space);
-    }
-
     // Used for moving stones eligibility
     pub fn mover(&self) -> Option<Player> {
         self.pieces.last().map(|piece| piece.owner())
@@ -90,12 +79,6 @@ pub struct NaiveBoard {
 }
 
 impl NaiveBoard {
-    // Internal use only
-    fn at_int(&self, point: &Point) -> Result<&Square, &str> {
-        let row = try!(self.grid.get(point.y).ok_or("Invalid point"));
-        row.get(point.x).ok_or("Invalid point")
-    }
-
     fn at_mut(&mut self, point: &Point) -> Result<&mut Square, &str> {
         let row = try!(self.grid.get_mut(point.y).ok_or("Invalid point"));
         row.get_mut(point.x).ok_or("Invalid point")
@@ -163,7 +146,7 @@ impl Board for NaiveBoard {
 
         while let Some(start) = starts.pop_front() {
             visited.insert(start);
-            if self.at_int(&start).ok().and_then(|p| p.owner()) == Some(player) {
+            if self.at(&start).ok().and_then(|p| p.owner()) == Some(player) {
                 connected.insert(start);
                 for point in Direction::neighbors(&start, self.size()) {
                     if !visited.contains(&point) {

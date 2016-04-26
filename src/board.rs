@@ -8,6 +8,7 @@ use piece::Piece;
 use piece::Player;
 use board5;
 use point::Point;
+use turn::Direction;
 
 #[derive(Copy, Clone, Debug, RustcDecodable, RustcEncodable)]
 pub struct PieceCount {
@@ -104,6 +105,16 @@ impl PieceIter {
         dup.last().map(|piece| piece.owner())
     }
 
+    pub fn owner(&self) -> Option<Player> {
+        let dup = self.clone();
+        dup.last().and_then(|piece|
+            if piece.stone() == Stone::Standing {
+                None
+            } else {
+                Some(piece.owner())
+            })
+    }
+
     // Used for winning the flats
     pub fn scorer(&self) -> Option<Player> {
         let dup = self.clone();
@@ -128,7 +139,23 @@ pub trait Board {
     fn follow(&self,
               starts: &mut VecDeque<Point>,
               player: Player)
-              -> BTreeSet<Point>;
+              -> BTreeSet<Point> {
+        let mut connected = BTreeSet::new();
+        let mut visited = BTreeSet::new();
+
+        while let Some(start) = starts.pop_front() {
+            visited.insert(start);
+            if self.at(&start).ok().and_then(|p| p.owner()) == Some(player) {
+                connected.insert(start);
+                for point in Direction::neighbors(&start, self.size()) {
+                    if !visited.contains(&point) {
+                        starts.push_back(point)
+                    }
+                }
+            }
+        }
+        connected
+    }
 
     // These 2 aren't necessarily efficient
     fn at(&self, point: &Point) -> Result<PieceIter, &str>;

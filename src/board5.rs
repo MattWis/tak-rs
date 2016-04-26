@@ -142,7 +142,7 @@ impl Board for Board5 {
                 match Piece::from_u8(spot.bits(15..13) as u8) {
                     Some(Piece::OneFlat) => pieces.p1_flat += 1,
                     Some(Piece::OneStanding) => pieces.p1_flat += 1,
-                    Some(Piece::OneCapstone) => pieces.p1_flat += 1,
+                    Some(Piece::OneCapstone) => pieces.p1_cap += 1,
                     Some(Piece::TwoFlat) => pieces.p2_flat += 1,
                     Some(Piece::TwoStanding) => pieces.p2_flat += 1,
                     Some(Piece::TwoCapstone) => pieces.p2_cap += 1,
@@ -223,13 +223,6 @@ impl Board for Board5 {
             // Need to figure out continuations
             Err("No available continuations. Did you play too many pieces?".into())
         }
-    }
-
-    fn follow(&self,
-              starts: &mut VecDeque<Point>,
-              player: Player)
-              -> BTreeSet<Point> {
-        BTreeSet::new()
     }
 }
 
