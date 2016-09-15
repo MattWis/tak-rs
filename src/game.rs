@@ -163,6 +163,22 @@ impl Game {
         Ok(())
     }
 
+    pub fn as_ptn(&self) -> String {
+        let mut response: String = "[Date \"2016.09.16\"]\n[Player1 \"anon1\"]\n\
+                                    [Player2 \"anon2\"]\n[Result \"\"]\n".into();
+        response.push_str(&(format!("[Size \"{}\"]\n", self.board.size())));
+        let mut turns = self.history.iter();
+        let mut count = 1;
+        while let Some(p1_turn) = turns.next() {
+            response.push_str(&(format!("{}. {}", count, p1_turn)));
+            if let Some(p2_turn) = turns.next() {
+                response.push_str(&(format!(" {}\n", p2_turn)));
+            }
+            count += 1;
+        }
+        response
+    }
+
     /// Checks for the winner via a road win
     ///
     /// Uses follow to go from the right wall as far left as possible for each

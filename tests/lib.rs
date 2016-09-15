@@ -211,6 +211,7 @@ fn all_pieces_with_cap() {
                  "d4", "e1+", "d4<", "e2<", "d3<", "2d2-2", "d4", "3d1<3", "d3",
                  "c1+", "d2", "2c2<2", "d1", "e1"];
     play_no_win(m, &mut game);
+    println!("{}", game.as_ptn());
     assert_eq!(game.play("e5", Player::One, Some(Player::One)).unwrap(), Some(Player::One));
 }
 

@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::fmt;
 
 use point::Point;
 use piece::Stone;
@@ -75,6 +76,17 @@ impl FromStr for Direction {
                 Some('-') => Ok(Direction::Down),
                 _ => return Err(()),
             }
+        }
+    }
+}
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Direction::Right => write!(f, ">"),
+            &Direction::Left => write!(f, "<"),
+            &Direction::Up => write!(f, "+"),
+            &Direction::Down => write!(f, "-"),
         }
     }
 }
@@ -167,6 +179,23 @@ impl FromStr for Turn {
             }
         } else {
             Err(())
+        }
+    }
+}
+
+impl fmt::Display for Turn {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Turn::Place { ref point, ref stone } => {
+                write!(f, "{}{}", stone, point)
+            },
+            &Turn::Slide { ref num_pieces, ref point, ref direction, ref drops } => {
+                try!(write!(f, "{}{}{}", num_pieces, point, direction));
+                for x in drops {
+                    try!(write!(f, "{}", x));
+                }
+                write!(f, "")
+            }
         }
     }
 }

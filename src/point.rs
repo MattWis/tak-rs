@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::fmt;
 
 // TODO: Optimize to a single u8
 // How to handle board sizes? (Maybe 2 u8s)
@@ -35,5 +36,14 @@ impl FromStr for Point {
             None => return Err(()),
         };
         Ok(Point { x: x, y: y })
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        let numbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
+        try!(write!(f, "{}", letters[self.x]));
+        write!(f, "{}", numbers[self.y])
     }
 }
