@@ -4,25 +4,9 @@ use tak::Game;
 use tak::Player;
 
 fn play_no_win(moves: Vec<&str>, game: &mut Game) -> () {
-    let mut turn = 0;
     for str in moves {
         println!("{}", str);
-        if turn >= 2 {
-            let player = if turn % 2 == 0 {
-                Player::One
-            } else {
-                Player::Two
-            };
-            assert_eq!(game.play(str, player, Some(player)).unwrap(), None);
-        } else {
-            let player = if turn % 2 == 0 {
-                Player::One
-            } else {
-                Player::Two
-            };
-            assert_eq!(game.play(str, player, Some(player.other())).unwrap(), None);
-        }
-        turn += 1;
+        assert_eq!(game.play_simple(str).unwrap(), None);
     }
 }
 

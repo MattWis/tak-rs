@@ -60,6 +60,24 @@ impl Game {
         self.board.to_string()
     }
 
+    pub fn play_simple(&mut self, turn: &str) -> Result<Option<Player>, String> {
+        let player = if self.history.len() % 2 == 0 {
+            Player::One
+        } else {
+            Player::Two
+        };
+        self.player_move(turn, player)
+    }
+
+    pub fn player_move(&mut self, turn: &str, player: Player) -> Result<Option<Player>, String> {
+        let owner = if self.history.len() >= 2 {
+            Some(player)
+        } else {
+            Some(player.other())
+        };
+        self.play(turn, player, owner)
+    }
+
     pub fn play(&mut self, turn: &str, player: Player, owner: Option<Player>) -> Result<Option<Player>, String> {
         if self.next != player {
             return Err("Not your turn".into());

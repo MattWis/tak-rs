@@ -1,6 +1,6 @@
 [package]
 name = "tak"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Matt Wismer <mattwis86@gmail.com>"]
 repository = "https://github.com/MattWis/tak-rs.git"
 homepage = "https://github.com/MattWis/tak-rs.git"
